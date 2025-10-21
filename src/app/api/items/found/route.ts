@@ -1,55 +1,79 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { foundItemSchema, imageUploadSchema } from '@/lib/validations';
+import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export async function POST(req: Request) {
   try {
-  const data = await req.json();
-  const { title, description, location, date, category, contactInfo } = data;
-  const session: any = await getServerSession(authOptions as any);
-  const userId: string | undefined = session?.user?.id;
+    const body = await req.json();
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
 
-    // Validate required fields
-    if (!title || !description || !location || !date || !category || !contactInfo) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    // Image is required for found items
+    if (!body.image) {
+      return errorResponse('Photo is required for found items', 400);
     }
 
+    // Validate item data
+    const validatedItem = foundItemSchema.parse({
+      title: body.title,
+      description: body.description,
+      location: body.location,
+      foundDate: body.date,
+      category: body.category,
+      contactInfo: body.contactInfo,
+      userId,
+    });
+
+    // Validate image
+    imageUploadSchema.parse({ image: body.image });
+
     // Create the found item record
-    const createData: any = {
-      title,
-      description,
-      location,
-      foundDate: new Date(date),
-      category,
-      contactInfo,
-      status: 'PENDING',
-    };
-    if (userId) createData.userId = userId;
+    const item = await prisma.foundItem.create({
+      data: {
+        title: validatedItem.title,
+        description: validatedItem.description,
+        location: validatedItem.location,
+        foundDate: validatedItem.foundDate,
+        category: validatedItem.category,
+        contactInfo: validatedItem.contactInfo,
+        status: 'PENDING',
+        userId: validatedItem.userId,
+      },
+    });
 
-    const item = await prisma.foundItem.create({ data: createData });
-
-    // If client sent an image (base64), save it to public/uploads and update record
-    if (data.image) {
+    // Handle image upload asynchronously
+    if (body.image) {
       try {
-        const matches = /^data:(image\/(png|jpeg));base64,(.+)$/.exec(data.image);
+        const matches = /^data:(image\/(png|jpeg));base64,(.+)$/.exec(body.image);
         if (matches) {
           const ext = matches[2] === 'jpeg' ? 'jpg' : matches[2];
           const b64 = matches[3];
           const buffer = Buffer.from(b64, 'base64');
           const filename = `${item.id}.${ext}`;
-          const fs = await import('fs');
-          const path = await import('path');
-          const outPath = path.join(process.cwd(), 'public', 'uploads', filename);
-          fs.writeFileSync(outPath, buffer);
-          await prisma.foundItem.update({ where: { id: item.id }, data: { imageUrl: `/uploads/${filename}` } });
+          
+          // Ensure uploads directory exists
+          const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+          await fs.mkdir(uploadsDir, { recursive: true });
+          
+          // Write file asynchronously
+          const outPath = path.join(uploadsDir, filename);
+          await fs.writeFile(outPath, buffer);
+          
+          // Update item with image URL
+          await prisma.foundItem.update({
+            where: { id: item.id },
+            data: { imageUrl: `/uploads/${filename}` }
+          });
+          
           item.imageUrl = `/uploads/${filename}`;
         }
-      } catch (err) {
-        console.error('Failed to save image:', err);
+      } catch (imageError) {
+        console.error('Failed to save image:', imageError);
+        // Continue without image rather than failing the entire request
       }
     }
 
@@ -57,45 +81,76 @@ export async function POST(req: Request) {
     const potentialMatches = await prisma.lostItem.findMany({
       where: {
         status: 'PENDING',
-        category: category,
+        category: validatedItem.category,
       },
+      take: 5,
     });
 
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       item,
       potentialMatches: potentialMatches.length,
-    });
-  } catch (error: any) {
-    console.error('Error creating found item:', error?.stack || error);
-    const msg = error?.message || String(error);
-    return NextResponse.json(
-      { error: msg },
-      { status: 500 }
-    );
+    }, 201);
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 
 export async function GET(req: Request) {
   try {
-    // Get session to check if user is admin
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return errorResponse('Unauthorized', 401);
     }
 
-    const items = await prisma.foundItem.findMany({
-      orderBy: {
-        createdAt: 'desc',
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      prisma.foundItem.findMany({
+        where: {
+          userId: session.user.id, // Only get items for this user
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          category: true,
+          location: true,
+          foundDate: true,
+          status: true,
+          imageUrl: true,
+          contactInfo: true,
+          createdAt: true,
+          reportedBy: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      }),
+      prisma.foundItem.count({
+        where: {
+          userId: session.user.id, // Count only user's items
+        },
+      }),
+    ]);
+
+    return successResponse({
+      items,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
     });
-
-    return NextResponse.json(items);
   } catch (error) {
-    console.error('Error fetching found items:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch found items' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

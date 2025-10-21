@@ -13,12 +13,13 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String?
-  password      String
+  password      String?   // Optional for OAuth users
   role          UserRole  @default(STUDENT)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   lostItems     LostItem[]
   foundItems    FoundItem[]
+  activityLogs  ActivityLog[]
 }
 
 enum UserRole {
@@ -42,6 +43,10 @@ model LostItem {
   updatedAt   DateTime  @updatedAt
   matchedWith FoundItem? @relation("ItemMatch", fields: [matchedItemId], references: [id])
   matchedItemId String? @unique
+
+  @@index([category, status])
+  @@index([status, createdAt])
+  @@index([userId])
 }
 
 model FoundItem {
@@ -59,6 +64,10 @@ model FoundItem {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   matchedItem LostItem? @relation("ItemMatch")
+
+  @@index([category, status])
+  @@index([status, createdAt])
+  @@index([userId])
 }
 
 enum ItemStatus {
@@ -66,4 +75,29 @@ enum ItemStatus {
   MATCHED
   CLAIMED
   ARCHIVED
+}
+
+model ActivityLog {
+  id          String       @id @default(cuid())
+  action      AdminAction
+  itemType    String       // 'LOST' or 'FOUND'
+  itemId      String
+  itemTitle   String       // Store title for reference even if item is deleted
+  performedBy User         @relation(fields: [userId], references: [id])
+  userId      String
+  details     String?      // JSON string with additional info (matched item, reason, etc.)
+  createdAt   DateTime     @default(now())
+
+  @@index([action, createdAt])
+  @@index([itemType, itemId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum AdminAction {
+  MATCH
+  CLAIM
+  ARCHIVE
+  DELETE
+  RESTORE
 }

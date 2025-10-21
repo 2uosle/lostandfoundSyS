@@ -1,8 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lost & Found System
+
+A modern, full-featured Lost & Found management system built with Next.js 15, featuring institutional Google OAuth authentication, advanced item matching algorithms, and admin dashboard.
+
+## Features
+
+✨ **Authentication**
+- 🔐 Credential-based authentication (email/password)
+- 🎓 **Google OAuth with institutional email** (@neu.edu.ph)
+- 🔒 Role-based access control (Admin/Student)
+
+📦 **Item Management**
+- 📢 Report lost items
+- ✨ Report found items (with required photo)
+- 🔍 Advanced fuzzy matching algorithm
+- 🏷️ Category-based filtering
+- 📍 Location tracking with synonym support
+- 🖼️ Image upload support
+
+👨‍💼 **Admin Dashboard**
+- 📊 Manage all lost and found items
+- 🔄 Side-by-side item comparison
+- ✅ Match, archive, claim, and delete items
+- 📜 Activity history logging
+- 🎯 Smart match scoring with breakdown
+
+🎨 **Modern UI/UX**
+- 🌟 Clean, Apple-inspired design
+- 📱 Fully responsive
+- 🔔 Toast notifications
+- ⚡ Fast and optimized
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ and npm
+- PostgreSQL database
+- Google Cloud Platform account (for OAuth)
+
+### 1. Clone and Install
+
+```bash
+git clone <your-repo>
+cd newproject
+npm install
+```
+
+### 2. Set Up Environment Variables
+
+Create a `.env` file in the root directory:
+
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/lostfound"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+```
+
+📖 **See [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md) for detailed Google OAuth setup instructions.**
+
+### 3. Set Up Database
+
+```bash
+# Run migrations
+npx prisma migrate dev
+
+# (Optional) Create an admin user
+npm run create-admin
+```
+
+### 4. Run the Development Server
 
 ```bash
 npm run dev
@@ -16,21 +86,110 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔐 Authentication Methods
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Option 1: Google OAuth (Recommended)
+1. Go to `/login`
+2. Click **"Sign in with Institutional Email"**
+3. Sign in with your `@neu.edu.ph` email
+4. You'll be automatically registered and logged in!
 
-## Learn More
+### Option 2: Email/Password
+1. Go to `/register`
+2. Create an account with any email and password
+3. Sign in at `/login`
 
-To learn more about Next.js, take a look at the following resources:
+## 📚 Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Framework**: Next.js 15 (App Router, React 19)
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js (Credentials + Google OAuth)
+- **Styling**: Tailwind CSS v4
+- **Validation**: Zod
+- **Language**: TypeScript
+- **Testing**: Playwright (E2E), Vitest (Unit)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🗂️ Project Structure
 
-## Deploy on Vercel
+```
+src/
+├── app/
+│   ├── api/              # API routes
+│   │   ├── auth/         # NextAuth & registration
+│   │   ├── items/        # Lost/found item endpoints
+│   │   ├── match/        # Matching algorithm
+│   │   └── admin/        # Admin actions
+│   ├── admin/            # Admin dashboard pages
+│   ├── lost/             # Report lost item
+│   ├── found/            # Report found item
+│   └── login/            # Login page
+├── components/           # Reusable components
+├── lib/                  # Utilities, validations, matching logic
+└── types/                # TypeScript types
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+prisma/
+├── schema.prisma         # Database schema
+└── migrations/           # Database migrations
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔧 Customization
+
+### Change Allowed Email Domains
+
+Edit `src/app/api/auth/[...nextauth]/route.ts`:
+
+```typescript
+const ALLOWED_DOMAINS = ['neu.edu.ph', 'yourdomain.edu']; // Add more domains
+```
+
+### Adjust Matching Algorithm
+
+Edit `src/lib/matching.ts` to customize:
+- Match score weights
+- Keyword extraction
+- Location synonyms
+- Date proximity scoring
+
+## 🚀 Deployment
+
+### Deploy to Vercel
+
+1. Push code to GitHub
+2. Import project in [Vercel](https://vercel.com)
+3. Add environment variables:
+   - `DATABASE_URL`
+   - `NEXTAUTH_URL`
+   - `NEXTAUTH_SECRET`
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+4. Deploy!
+
+Don't forget to add production callback URL to Google Console:
+- `https://yourdomain.com/api/auth/callback/google`
+
+## 📖 Documentation
+
+- [Google OAuth Setup Guide](./GOOGLE_OAUTH_SETUP.md) - Detailed OAuth configuration
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [NextAuth.js Documentation](https://next-auth.js.org)
+
+## 🐛 Troubleshooting
+
+**Q: Google sign-in redirects but doesn't work**
+- Check `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set
+- Verify redirect URI in Google Console matches exactly
+- Restart dev server after adding env variables
+
+**Q: Database migration failed**
+- Ensure PostgreSQL is running
+- Check `DATABASE_URL` is correct
+- Run `npx prisma generate` then retry migration
+
+**Q: "Only institutional emails allowed" error**
+- You tried to sign in with a non-@neu.edu.ph email
+- Add your domain to `ALLOWED_DOMAINS` array
+
+## 📝 License
+
+MIT

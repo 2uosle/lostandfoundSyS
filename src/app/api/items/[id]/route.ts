@@ -1,33 +1,81 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
 
-export async function GET(req: Request, context: any) {
-  const { id } = context.params;
-  const item = await prisma.lostItem.findUnique({ where: { id } });
-  if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(item);
-}
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
 
-export async function PATCH(req: Request, context: any) {
-  const { id } = context.params;
-  const body = await req.json();
-  const item = await prisma.lostItem.update({ where: { id }, data: body });
-  return NextResponse.json(item);
-}
+export async function GET(
+  req: Request,
+  context: RouteContext
+) {
+  try {
+    const { id } = await context.params;
+    
+    const item = await prisma.lostItem.findUnique({
+      where: { id },
+      include: {
+        reportedBy: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
 
-export async function DELETE(req: Request, context: any) {
-  const { id } = context.params;
-  await prisma.lostItem.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
-}
+    if (!item) {
+      return errorResponse('Item not found', 404);
+    }
 
-export async function POST(req: Request, context: any) {
-  const { id } = context.params;
-  const bodyText = await req.text();
-  // simple form method override
-  if (bodyText.includes('_method=DELETE')) {
-    await prisma.lostItem.delete({ where: { id } });
-    return NextResponse.json({ ok: true });
+    return successResponse(item);
+  } catch (error) {
+    return handleApiError(error);
   }
-  return NextResponse.json({ error: 'Unsupported' }, { status: 400 });
+}
+
+export async function PATCH(
+  req: Request,
+  context: RouteContext
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return errorResponse('Unauthorized', 403);
+    }
+
+    const { id } = await context.params;
+    const body = await req.json();
+
+    const item = await prisma.lostItem.update({
+      where: { id },
+      data: body,
+    });
+
+    return successResponse(item);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  context: RouteContext
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return errorResponse('Unauthorized', 403);
+    }
+
+    const { id } = await context.params;
+
+    await prisma.lostItem.delete({ where: { id } });
+
+    return successResponse({ message: 'Item deleted successfully' });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

@@ -28,13 +28,8 @@ type MatchCandidate = {
     description: string;
     category: string;
     location: string;
-    foundDate: Date;
     imageUrl: string | null;
     contactInfo: string;
-    reportedBy?: {
-      name: string | null;
-      email: string | null;
-    };
   };
   score: number;
   breakdown: {
@@ -371,15 +366,20 @@ export default function AdminItemsPage() {
                                 </span>
                               ))}
                             </div>
-                            <button
-                              onClick={() => openCompareView(candidate)}
-                              className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                              </svg>
-                              View Comparison
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => openCompareView(candidate)}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                              >
+                                Compare Side-by-Side
+                              </button>
+                              <button
+                                onClick={() => handleAction('match', matchingFor, candidate.item.id)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                              >
+                                Confirm Match
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -459,17 +459,6 @@ export default function AdminItemsPage() {
                         <label className="text-sm font-semibold text-gray-700">Contact:</label>
                         <p className="text-gray-900">{compareView.lost.contactInfo}</p>
                       </div>
-                      {compareView.lost.reportedBy && (
-                        <div className="pt-3 mt-3 border-t border-blue-200">
-                          <label className="text-sm font-semibold text-gray-700">Reported By:</label>
-                          <p className="text-gray-900">
-                            {compareView.lost.reportedBy.name || 'Anonymous'}
-                          </p>
-                          {compareView.lost.reportedBy.email && (
-                            <p className="text-sm text-gray-600">{compareView.lost.reportedBy.email}</p>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -504,24 +493,9 @@ export default function AdminItemsPage() {
                         <p className="text-gray-900">{compareView.found.item.location}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Date Found:</label>
-                        <p className="text-gray-900">{format(new Date(compareView.found.item.foundDate), 'MMM dd, yyyy')}</p>
-                      </div>
-                      <div>
                         <label className="text-sm font-semibold text-gray-700">Contact:</label>
                         <p className="text-gray-900">{compareView.found.item.contactInfo}</p>
                       </div>
-                      {compareView.found.item.reportedBy && (
-                        <div className="pt-3 mt-3 border-t border-green-200">
-                          <label className="text-sm font-semibold text-gray-700">Reported By:</label>
-                          <p className="text-gray-900">
-                            {compareView.found.item.reportedBy.name || 'Anonymous'}
-                          </p>
-                          {compareView.found.item.reportedBy.email && (
-                            <p className="text-sm text-gray-600">{compareView.found.item.reportedBy.email}</p>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -539,75 +513,19 @@ export default function AdminItemsPage() {
                   </div>
                 </div>
               </div>
-              <div className="p-6 border-t border-gray-200">
-                <div className="flex flex-col gap-3">
-                  {/* Primary Actions */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => handleAction('match', matchingFor!, compareView.found.item.id)}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Confirm Match
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to decline this match?')) {
-                          setCompareView(null);
-                          showToast('Match declined', 'info');
-                        }
-                      }}
-                      className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Decline Match
-                    </button>
-                  </div>
-
-                  {/* Secondary Actions */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => {
-                        if (confirm('Archive this lost item? You can still restore it later.')) {
-                          handleAction('archive', matchingFor!);
-                        }
-                      }}
-                      className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                      </svg>
-                      Archive Lost Item
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to delete this lost item? This action cannot be undone.')) {
-                          handleDelete(matchingFor!);
-                          setCompareView(null);
-                        }
-                      }}
-                      className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete Lost Item
-                    </button>
-                    <button
-                      onClick={() => setCompareView(null)}
-                      className="px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                      </svg>
-                      Back to Matches
-                    </button>
-                  </div>
-                </div>
+              <div className="p-6 border-t border-gray-200 flex gap-3">
+                <button
+                  onClick={() => setCompareView(null)}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Back to Matches
+                </button>
+                <button
+                  onClick={() => handleAction('match', matchingFor!, compareView.found.item.id)}
+                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Confirm Match
+                </button>
               </div>
             </div>
           </div>
