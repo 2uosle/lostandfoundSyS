@@ -10,12 +10,13 @@ A modern, full-featured Lost & Found management system built with Next.js 15, fe
 - 🔒 Role-based access control (Admin/Student)
 
 📦 **Item Management**
-- 📢 Report lost items
-- ✨ Report found items (with required photo)
+- 📢 Report lost items (authentication required)
+- ✨ Report found items (authentication required, photo required)
 - 🔍 Advanced fuzzy matching algorithm
 - 🏷️ Category-based filtering
 - 📍 Location tracking with synonym support
 - 🖼️ Image upload support
+- 🔐 Protected routes - must sign in to report items
 
 👨‍💼 **Admin Dashboard**
 - 📊 Manage all lost and found items

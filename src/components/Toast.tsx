@@ -64,9 +64,16 @@ export default function Toast({ message, type, duration = 5000, onClose }: Toast
 
 // Toast Container for managing multiple toasts
 type ToastData = {
-  id: number;
+  id: string;
   message: string;
   type: ToastType;
+};
+
+// Generate unique IDs using counter + timestamp
+let toastCounter = 0;
+const generateToastId = () => {
+  toastCounter += 1;
+  return `toast-${Date.now()}-${toastCounter}`;
 };
 
 export function ToastContainer() {
@@ -76,14 +83,14 @@ export function ToastContainer() {
     // Listen for custom toast events
     const handleToast = ((e: CustomEvent) => {
       const { message, type = 'info' } = e.detail;
-      setToasts(prev => [...prev, { id: Date.now(), message, type }]);
+      setToasts(prev => [...prev, { id: generateToastId(), message, type }]);
     }) as EventListener;
 
     window.addEventListener('show-toast', handleToast);
     return () => window.removeEventListener('show-toast', handleToast);
   }, []);
 
-  const removeToast = (id: number) => {
+  const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 

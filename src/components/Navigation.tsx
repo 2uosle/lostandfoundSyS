@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
+import NotificationBell from './NotificationBell';
 
 export default function Navigation() {
   const { data: session, status } = useSession();
@@ -77,6 +78,8 @@ export default function Navigation() {
 
           {/* Auth Section */}
           <div className="flex items-center space-x-3">
+            {/* Notification Bell - Only show for logged-in users */}
+            {session?.user && <NotificationBell />}
             
             {status === 'loading' ? (
               <div className="w-20 h-9 bg-gray-200 animate-pulse rounded-lg"></div>
@@ -87,7 +90,7 @@ export default function Navigation() {
                 </span>
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}
-                  className="px-4 py-2 text-sm font-medium text-gray-700
+                  className="px-4 py-2 text-sm font-medium text-gray-700 
                            hover:text-gray-900
                            border border-gray-300 rounded-lg 
                            hover:bg-gray-50 transition-all"
@@ -99,7 +102,7 @@ export default function Navigation() {
               <div className="flex items-center space-x-2">
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700
+                  className="px-4 py-2 text-sm font-medium text-gray-700 
                            hover:text-gray-900 transition-colors"
                 >
                   Sign In

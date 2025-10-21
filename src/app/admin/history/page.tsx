@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { showToast } from '@/components/Toast';
+import Link from 'next/link';
 
 type ActivityLog = {
   id: string;
@@ -18,12 +19,30 @@ type ActivityLog = {
   createdAt: Date;
 };
 
+type ItemDetails = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string | null;
+  date: Date;
+  imageUrl: string | null;
+  contactInfo: string;
+  status: string;
+  reportedBy?: {
+    name: string | null;
+    email: string | null;
+  };
+};
+
 export default function AdminHistoryPage() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterAction, setFilterAction] = useState('all');
   const [filterItemType, setFilterItemType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewingMatch, setViewingMatch] = useState<{ lost: ItemDetails; found: ItemDetails } | null>(null);
+  const [loadingMatch, setLoadingMatch] = useState(false);
 
   useEffect(() => {
     loadLogs();
@@ -47,8 +66,37 @@ export default function AdminHistoryPage() {
     }
   }
 
+  // Group matched logs - combine MATCH/RESOLVE logs for the same pair into one entry
+  const groupedLogs = logs.reduce((acc: ActivityLog[], log) => {
+    const details = parseDetails(log.details);
+    
+    // Only group MATCH and RESOLVE actions
+    if ((log.action === 'MATCH' || log.action === 'RESOLVE') && details?.matchedWith) {
+      // Check if we already have a log for this match pair
+      const existingIndex = acc.findIndex(existingLog => {
+        const existingDetails = parseDetails(existingLog.details);
+        if (!existingDetails?.matchedWith) return false;
+        
+        // Check if these logs refer to the same match pair (in either direction)
+        return (
+          (existingLog.itemId === log.itemId && existingDetails.matchedWith === details.matchedWith) ||
+          (existingLog.itemId === details.matchedWith && existingDetails.matchedWith === log.itemId)
+        );
+      });
+
+      // If we found a matching pair, skip this duplicate (keep the first one)
+      if (existingIndex !== -1) {
+        return acc;
+      }
+    }
+    
+    // Add log to accumulator
+    acc.push(log);
+    return acc;
+  }, []);
+
   // Filter logs
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = groupedLogs.filter(log => {
     const matchesAction = filterAction === 'all' || log.action === filterAction;
     const matchesType = filterItemType === 'all' || log.itemType === filterItemType;
     const matchesSearch = 
@@ -67,6 +115,7 @@ export default function AdminHistoryPage() {
       ARCHIVE: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '📦' },
       DELETE: { bg: 'bg-red-100', text: 'text-red-800', icon: '🗑️' },
       RESTORE: { bg: 'bg-purple-100', text: 'text-purple-800', icon: '↩️' },
+      RESOLVE: { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '✨' },
     };
 
     const badge = badges[action] || badges.ARCHIVE;
@@ -76,6 +125,85 @@ export default function AdminHistoryPage() {
         {action}
       </span>
     );
+  }
+
+  // Load matched items for viewing
+  async function loadMatchedItems(log: ActivityLog) {
+    const details = parseDetails(log.details);
+    if (!details || !details.matchedWith) {
+      showToast('No match information available', 'info');
+      return;
+    }
+
+    setLoadingMatch(true);
+    try {
+      // Fetch both lost and found items
+      const [lostRes, foundRes] = await Promise.all([
+        fetch(`/api/items/lost`),
+        fetch(`/api/items/found`),
+      ]);
+
+      const [lostData, foundData] = await Promise.all([
+        lostRes.json(),
+        foundRes.json(),
+      ]);
+
+      if (!lostData.success || !foundData.success) {
+        showToast('Failed to load item details', 'error');
+        return;
+      }
+
+      // Determine which item is lost and which is found
+      let lostItem, foundItem;
+      
+      if (log.itemType === 'LOST') {
+        // The log is for a lost item, so itemId is the lost item
+        lostItem = lostData.data.items.find((item: any) => item.id === log.itemId);
+        foundItem = foundData.data.items.find((item: any) => item.id === details.matchedWith);
+      } else {
+        // The log is for a found item, so itemId is the found item and matchedWith is the lost item
+        foundItem = foundData.data.items.find((item: any) => item.id === log.itemId);
+        lostItem = lostData.data.items.find((item: any) => item.id === details.matchedWith);
+      }
+
+      if (!lostItem || !foundItem) {
+        showToast('Could not find matched items', 'error');
+        return;
+      }
+
+      // Map to ItemDetails format
+      const lostDetails: ItemDetails = {
+        id: lostItem.id,
+        title: lostItem.title,
+        description: lostItem.description,
+        category: lostItem.category,
+        location: lostItem.location,
+        date: lostItem.lostDate,
+        imageUrl: lostItem.imageUrl,
+        contactInfo: lostItem.contactInfo,
+        status: lostItem.status,
+        reportedBy: lostItem.reportedBy,
+      };
+
+      const foundDetails: ItemDetails = {
+        id: foundItem.id,
+        title: foundItem.title,
+        description: foundItem.description,
+        category: foundItem.category,
+        location: foundItem.location,
+        date: foundItem.foundDate,
+        imageUrl: foundItem.imageUrl,
+        contactInfo: foundItem.contactInfo,
+        status: foundItem.status,
+        reportedBy: foundItem.reportedBy,
+      };
+
+      setViewingMatch({ lost: lostDetails, found: foundDetails });
+    } catch (error) {
+      showToast('Failed to load item details', 'error');
+    } finally {
+      setLoadingMatch(false);
+    }
   }
 
   // Parse details JSON
@@ -91,6 +219,17 @@ export default function AdminHistoryPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <Link 
+          href="/admin/dashboard"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </Link>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Activity History</h1>
@@ -123,6 +262,7 @@ export default function AdminHistoryPage() {
                 <option value="ARCHIVE">Archive</option>
                 <option value="DELETE">Delete</option>
                 <option value="RESTORE">Restore</option>
+                <option value="RESOLVE">Resolve</option>
               </select>
             </div>
             <div>
@@ -141,9 +281,9 @@ export default function AdminHistoryPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          {['MATCH', 'CLAIM', 'ARCHIVE', 'DELETE', 'RESTORE'].map(action => {
-            const count = logs.filter(log => log.action === action).length;
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+          {['MATCH', 'CLAIM', 'ARCHIVE', 'DELETE', 'RESTORE', 'RESOLVE'].map(action => {
+            const count = groupedLogs.filter(log => log.action === action).length;
             return (
               <div key={action} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                 <div className="text-2xl font-bold text-gray-900">{count}</div>
@@ -198,8 +338,19 @@ export default function AdminHistoryPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredLogs.map((log) => {
                     const details = parseDetails(log.details);
+                    const hasMatch = details && details.matchedWith;
+                    const isMatchAction = log.action === 'MATCH' || log.action === 'RESOLVE';
+                    
                     return (
-                      <tr key={log.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={log.id} 
+                        className={`hover:bg-gray-50 ${hasMatch && isMatchAction ? 'cursor-pointer' : ''}`}
+                        onClick={() => {
+                          if (hasMatch && isMatchAction) {
+                            loadMatchedItems(log);
+                          }
+                        }}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {format(new Date(log.createdAt), 'MMM dd, yyyy HH:mm')}
                         </td>
@@ -207,17 +358,38 @@ export default function AdminHistoryPage() {
                           {getActionBadge(log.action)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          <div className="font-medium">{log.itemTitle}</div>
-                          <div className="text-xs text-gray-500">ID: {log.itemId.slice(0, 8)}...</div>
+                          {hasMatch && isMatchAction ? (
+                            <div>
+                              <div className="font-medium flex items-center gap-2 mb-1">
+                                📦 Matched Pair
+                                <span className="text-xs text-blue-600">👁️ Click to view</span>
+                              </div>
+                              <div className="text-xs text-gray-600 space-y-0.5">
+                                <div>📢 Lost: <span className="font-medium">{log.itemType === 'LOST' ? log.itemTitle : details.matchedTitle}</span></div>
+                                <div>✨ Found: <span className="font-medium">{log.itemType === 'FOUND' ? log.itemTitle : details.matchedTitle}</span></div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="font-medium">{log.itemTitle}</div>
+                              <div className="text-xs text-gray-500">ID: {log.itemId.slice(0, 8)}...</div>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            log.itemType === 'LOST' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {log.itemType}
-                          </span>
+                          {hasMatch && isMatchAction ? (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              PAIR
+                            </span>
+                          ) : (
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              log.itemType === 'LOST' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {log.itemType}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           <div className="font-medium">{log.performedBy.name || 'Admin'}</div>
@@ -247,6 +419,169 @@ export default function AdminHistoryPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Matched Items Modal */}
+        {viewingMatch && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4 z-50">
+            <div className="bg-white border border-gray-200 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Matched Items - Side by Side</h2>
+                    <p className="text-gray-600 mt-1">View the matched lost and found items</p>
+                  </div>
+                  <button
+                    onClick={() => setViewingMatch(null)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 overflow-y-auto flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Lost Item */}
+                  <div className="border-2 border-blue-500 rounded-lg p-6">
+                    <div className="flex items-center mb-4">
+                      <span className="text-2xl mr-2">📢</span>
+                      <h3 className="text-xl font-bold text-blue-600">Lost Item</h3>
+                      <span className={`ml-auto px-2 py-1 text-xs font-medium rounded-full ${
+                        viewingMatch.lost.status === 'RESOLVED'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {viewingMatch.lost.status}
+                      </span>
+                    </div>
+                    {viewingMatch.lost.imageUrl && (
+                      <img
+                        src={viewingMatch.lost.imageUrl}
+                        alt={viewingMatch.lost.title}
+                        className="w-full h-48 object-cover rounded-lg mb-4"
+                      />
+                    )}
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Title:</label>
+                        <p className="text-gray-900">{viewingMatch.lost.title}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Description:</label>
+                        <p className="text-gray-900">{viewingMatch.lost.description}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Category:</label>
+                        <p className="text-gray-900 capitalize">{viewingMatch.lost.category}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Location:</label>
+                        <p className="text-gray-900">{viewingMatch.lost.location || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Date Lost:</label>
+                        <p className="text-gray-900">{format(new Date(viewingMatch.lost.date), 'MMM dd, yyyy')}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Contact:</label>
+                        <p className="text-gray-900">{viewingMatch.lost.contactInfo}</p>
+                      </div>
+                      {viewingMatch.lost.reportedBy && (
+                        <div className="pt-3 mt-3 border-t border-blue-200">
+                          <label className="text-sm font-semibold text-gray-700">Reported By:</label>
+                          <p className="text-gray-900">
+                            {viewingMatch.lost.reportedBy.name || 'Anonymous'}
+                          </p>
+                          {viewingMatch.lost.reportedBy.email && (
+                            <p className="text-sm text-gray-600">{viewingMatch.lost.reportedBy.email}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Found Item */}
+                  <div className="border-2 border-green-500 rounded-lg p-6">
+                    <div className="flex items-center mb-4">
+                      <span className="text-2xl mr-2">✨</span>
+                      <h3 className="text-xl font-bold text-green-600">Found Item</h3>
+                      <span className={`ml-auto px-2 py-1 text-xs font-medium rounded-full ${
+                        viewingMatch.found.status === 'RESOLVED'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {viewingMatch.found.status}
+                      </span>
+                    </div>
+                    {viewingMatch.found.imageUrl && (
+                      <img
+                        src={viewingMatch.found.imageUrl}
+                        alt={viewingMatch.found.title}
+                        className="w-full h-48 object-cover rounded-lg mb-4"
+                      />
+                    )}
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Title:</label>
+                        <p className="text-gray-900">{viewingMatch.found.title}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Description:</label>
+                        <p className="text-gray-900">{viewingMatch.found.description}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Category:</label>
+                        <p className="text-gray-900 capitalize">{viewingMatch.found.category}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Location:</label>
+                        <p className="text-gray-900">{viewingMatch.found.location || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Date Found:</label>
+                        <p className="text-gray-900">{format(new Date(viewingMatch.found.date), 'MMM dd, yyyy')}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Contact:</label>
+                        <p className="text-gray-900">{viewingMatch.found.contactInfo}</p>
+                      </div>
+                      {viewingMatch.found.reportedBy && (
+                        <div className="pt-3 mt-3 border-t border-green-200">
+                          <label className="text-sm font-semibold text-gray-700">Reported By:</label>
+                          <p className="text-gray-900">
+                            {viewingMatch.found.reportedBy.name || 'Anonymous'}
+                          </p>
+                          {viewingMatch.found.reportedBy.email && (
+                            <p className="text-sm text-gray-600">{viewingMatch.found.reportedBy.email}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 border-t border-gray-200">
+                <button
+                  onClick={() => setViewingMatch(null)}
+                  className="w-full px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Loading Overlay */}
+        {loadingMatch && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-900 font-medium">Loading match details...</p>
             </div>
           </div>
         )}

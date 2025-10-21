@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { showToast } from '@/components/Toast';
 
 type Item = {
   id: string;
@@ -27,6 +28,7 @@ export default function Dashboard() {
   const [foundItems, setFoundItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'lost' | 'found'>('lost');
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -61,6 +63,39 @@ export default function Dashboard() {
       console.error('Error loading items:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResolve = async (itemId: string) => {
+    if (!confirm('Mark this item as resolved? This confirms you have received your lost item.')) {
+      return;
+    }
+
+    setResolvingId(itemId);
+    try {
+      const res = await fetch(`/api/items/lost/${itemId}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to resolve item');
+      }
+
+      showToast('Item marked as resolved!', 'success');
+      
+      // Update local state
+      setLostItems(prev => 
+        prev.map(item => 
+          item.id === itemId ? { ...item, status: 'RESOLVED' } : item
+        )
+      );
+    } catch (error) {
+      console.error('Error resolving item:', error);
+      showToast(error instanceof Error ? error.message : 'Failed to resolve item', 'error');
+    } finally {
+      setResolvingId(null);
     }
   };
 
@@ -163,6 +198,8 @@ export default function Dashboard() {
                           ? 'bg-blue-100 text-blue-800'
                           : item.status === 'CLAIMED'
                           ? 'bg-green-100 text-green-800'
+                          : item.status === 'RESOLVED'
+                          ? 'bg-purple-100 text-purple-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
@@ -172,7 +209,7 @@ export default function Dashboard() {
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                     {item.description}
                   </p>
-                  <div className="space-y-1 text-xs text-gray-500">
+                  <div className="space-y-1 text-xs text-gray-500 mb-3">
                     <div className="flex items-center">
                       <span className="font-medium mr-2">Category:</span>
                       <span className="capitalize">{item.category}</span>
@@ -193,6 +230,47 @@ export default function Dashboard() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Action Button - Only for Lost Items */}
+                  {activeTab === 'lost' && item.status !== 'RESOLVED' && (
+                    <button
+                      onClick={() => handleResolve(item.id)}
+                      disabled={resolvingId === item.id}
+                      className={`w-full px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                        resolvingId === item.id
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm hover:shadow-md'
+                      } flex items-center justify-center gap-2`}
+                    >
+                      {resolvingId === item.id ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Resolving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Mark as Resolved</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Resolved Status Display */}
+                  {item.status === 'RESOLVED' && (
+                    <div className="w-full px-4 py-2 bg-purple-50 border border-purple-200 rounded-lg text-center">
+                      <div className="flex items-center justify-center gap-2 text-purple-700">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-sm font-medium">
+                          {activeTab === 'lost' ? 'Item Recovered' : 'Item Returned to Owner'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

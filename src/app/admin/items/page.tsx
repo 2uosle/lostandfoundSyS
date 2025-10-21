@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { showToast } from '@/components/Toast';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 type Item = {
   id: string;
@@ -154,8 +155,11 @@ export default function AdminItemsPage() {
     }
   }
 
-  // Filter items
+  // Filter items - exclude RESOLVED items from this page
   const filteredItems = items.filter(item => {
+    // Don't show RESOLVED items in Manage Lost Items (they go to Activity History)
+    if (item.status === 'RESOLVED') return false;
+    
     const matchesSearch =
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -168,6 +172,17 @@ export default function AdminItemsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <Link 
+          href="/admin/dashboard"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </Link>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Manage Lost Items</h1>
           <p className="text-gray-600 mt-2">Review and manage all reported lost items</p>
@@ -260,6 +275,8 @@ export default function AdminItemsPage() {
                             ? 'bg-blue-100 text-blue-800'
                             : item.status === 'CLAIMED'
                             ? 'bg-green-100 text-green-800'
+                            : item.status === 'RESOLVED'
+                            ? 'bg-purple-100 text-purple-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
@@ -554,9 +571,11 @@ export default function AdminItemsPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm('Are you sure you want to decline this match?')) {
+                        if (confirm('Are you sure you want to decline this match? It will be removed from the suggestions.')) {
+                          // Remove this candidate from the match list
+                          setMatchCandidates(prev => prev.filter(c => c.item.id !== compareView.found.item.id));
                           setCompareView(null);
-                          showToast('Match declined', 'info');
+                          showToast('Match declined and removed from suggestions', 'info');
                         }
                       }}
                       className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-2"

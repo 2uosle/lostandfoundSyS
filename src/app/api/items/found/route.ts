@@ -107,11 +107,14 @@ export async function GET(req: Request) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
     const skip = (page - 1) * limit;
 
+    // Admins see all items, regular users see only their own
+    const whereClause = session.user.role === 'ADMIN' 
+      ? {} 
+      : { userId: session.user.id };
+
     const [items, total] = await Promise.all([
       prisma.foundItem.findMany({
-        where: {
-          userId: session.user.id, // Only get items for this user
-        },
+        where: whereClause,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -135,9 +138,7 @@ export async function GET(req: Request) {
         },
       }),
       prisma.foundItem.count({
-        where: {
-          userId: session.user.id, // Count only user's items
-        },
+        where: whereClause,
       }),
     ]);
 

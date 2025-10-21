@@ -1,29 +1,45 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import AuthForm from '@/components/AuthForm';
 import Link from 'next/link';
 import { showToast } from '@/components/Toast';
 
 export default function LoginPage(){
   const [isLoading, setIsLoading] = useState(false);
+  const [toastShown, setToastShown] = useState(false);
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
+
+  useEffect(() => {
+    // Show message if user was redirected here (only once)
+    if (callbackUrl !== '/' && !toastShown) {
+      showToast('Please sign in to continue', 'info');
+      setToastShown(true);
+    }
+  }, [callbackUrl, toastShown]);
 
   const handle = async (data:any)=>{
     setIsLoading(true);
-    const res = await signIn('credentials', { redirect: false, email: data.email, password: data.password });
+    const res = await signIn('credentials', { 
+      redirect: false, 
+      email: data.email, 
+      password: data.password 
+    });
     if ((res as any)?.error) {
       showToast('Invalid email or password', 'error');
       setIsLoading(false);
     } else {
       showToast('Welcome back!', 'success');
-      window.location.href = '/';
+      window.location.href = callbackUrl;
     }
   };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signIn('google', { callbackUrl: '/' });
+      await signIn('google', { callbackUrl });
     } catch (error) {
       showToast('Failed to sign in with Google', 'error');
       setIsLoading(false);

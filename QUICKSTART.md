@@ -78,10 +78,11 @@ UPDATE "User" SET role = 'ADMIN' WHERE email = 'youremail@example.com';
 - Login at `/login`
 - Fully functional without Google OAuth
 
-✅ **Item Management**
-- Report lost items at `/lost`
-- Report found items at `/found`
-- View your items at `/dashboard`
+✅ **Item Management** (requires sign-in)
+- Report lost items at `/lost` 🔒
+- Report found items at `/found` 🔒
+- View your items at `/dashboard` 🔒
+- **Note**: You must be signed in to report items
 
 ✅ **Admin Dashboard** (admin users only)
 - Manage all items at `/admin/items`

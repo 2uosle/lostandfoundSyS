@@ -102,15 +102,15 @@ export async function POST(req: Request) {
       }
 
       case 'match': {
-        // Get both items' details
+        // Get both items' details including user IDs
         const [lostItem, foundItem] = await Promise.all([
           prisma.lostItem.findUnique({
             where: { id: itemId },
-            select: { title: true, category: true },
+            select: { title: true, category: true, userId: true },
           }),
           prisma.foundItem.findUnique({
             where: { id: matchWithId },
-            select: { title: true, id: true },
+            select: { title: true, id: true, userId: true },
           }),
         ]);
 
@@ -152,6 +152,45 @@ export async function POST(req: Request) {
             { matchedWith: itemId, matchedTitle: lostItem.title }
           ),
         ]);
+
+        // Create notifications for users
+        const notifications = [];
+        
+        // Notify the lost item owner
+        if (lostItem.userId) {
+          notifications.push(
+            prisma.notification.create({
+              data: {
+                userId: lostItem.userId,
+                type: 'ITEM_MATCHED',
+                title: 'Match Found!',
+                message: `Your lost item "${lostItem.title}" has been matched with a found item "${foundItem.title}". Check your dashboard for details.`,
+                itemId: itemId,
+                itemType: 'LOST',
+              },
+            })
+          );
+        }
+
+        // Notify the found item owner
+        if (foundItem.userId) {
+          notifications.push(
+            prisma.notification.create({
+              data: {
+                userId: foundItem.userId,
+                type: 'MATCH_FOUND',
+                title: 'Item Matched!',
+                message: `The item you found "${foundItem.title}" has been matched with a lost item "${lostItem.title}".`,
+                itemId: matchWithId,
+                itemType: 'FOUND',
+              },
+            })
+          );
+        }
+
+        if (notifications.length > 0) {
+          await Promise.all(notifications);
+        }
 
         return successResponse({ message: 'Items matched successfully' });
       }

@@ -20,6 +20,7 @@ model User {
   lostItems     LostItem[]
   foundItems    FoundItem[]
   activityLogs  ActivityLog[]
+  notifications Notification[]
 }
 
 enum UserRole {
@@ -75,6 +76,7 @@ enum ItemStatus {
   MATCHED
   CLAIMED
   ARCHIVED
+  RESOLVED
 }
 
 model ActivityLog {
@@ -100,4 +102,28 @@ enum AdminAction {
   ARCHIVE
   DELETE
   RESTORE
+  RESOLVE
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  itemId    String?  // Reference to the item (lost or found)
+  itemType  String?  // 'LOST' or 'FOUND'
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  ITEM_MATCHED
+  ITEM_CLAIMED
+  ITEM_RESOLVED
+  MATCH_FOUND
 }
