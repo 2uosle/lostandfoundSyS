@@ -4,24 +4,44 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "create-admin": "ts-node ./scripts/create-admin.ts",
+    "test": "vitest",
+    "e2e": "playwright test",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint"
   },
+
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.0",
+    "@prisma/client": "^6.17.1",
+    "@tanstack/react-query": "^5.90.5",
+    "bcryptjs": "^3.0.2",
+    "date-fns": "^4.1.0",
+    "next": "15.5.6",
+    "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.6"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
+    "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.56.1",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.19.23",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "@types/testing-library__jest-dom": "^5.14.9",
     "eslint": "^9",
     "eslint-config-next": "15.5.6",
-    "@eslint/eslintrc": "^3"
+    "jsdom": "^27.0.1",
+    "prisma": "^6.17.1",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

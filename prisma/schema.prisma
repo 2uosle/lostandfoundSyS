@@ -1,0 +1,69 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          UserRole  @default(STUDENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lostItems     LostItem[]
+  foundItems    FoundItem[]
+}
+
+enum UserRole {
+  ADMIN
+  STUDENT
+}
+
+model LostItem {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  category    String
+  location    String?
+  contactInfo String?
+  lostDate    DateTime
+  status      ItemStatus @default(PENDING)
+  imageUrl    String?
+  reportedBy  User?     @relation(fields: [userId], references: [id])
+  userId      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  matchedWith FoundItem? @relation("ItemMatch", fields: [matchedItemId], references: [id])
+  matchedItemId String? @unique
+}
+
+model FoundItem {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  category    String
+  location    String
+  contactInfo String?
+  foundDate   DateTime
+  status      ItemStatus @default(PENDING)
+  imageUrl    String?
+  reportedBy  User?     @relation(fields: [userId], references: [id])
+  userId      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  matchedItem LostItem? @relation("ItemMatch")
+}
+
+enum ItemStatus {
+  PENDING
+  MATCHED
+  CLAIMED
+  ARCHIVED
+}
