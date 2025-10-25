@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { lostItemSchema, imageUploadSchema } from '@/lib/validations';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
 import { saveValidatedImage } from '@/lib/image-validation';

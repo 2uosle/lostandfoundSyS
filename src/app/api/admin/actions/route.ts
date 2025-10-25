@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma, $Enums } from '@prisma/client';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { adminActionSchema } from '@/lib/validations';
 import { sendEmail } from '@/lib/email';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';

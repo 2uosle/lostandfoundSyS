@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
 import { generateCode, HANDOFF_TTL_MS } from '@/lib/handoff';
 import { $Enums } from '@prisma/client';
