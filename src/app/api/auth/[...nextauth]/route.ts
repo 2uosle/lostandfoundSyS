@@ -1,3 +1,4 @@
+// NextAuth route handler - imports configuration from @/lib/auth
 import NextAuth from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
