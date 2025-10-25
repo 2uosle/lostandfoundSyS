@@ -1,16 +1,20 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import AuthForm from '@/components/AuthForm';
 import Link from 'next/link';
 import { showToast } from '@/components/Toast';
 
-export default function LoginPage(){
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [toastShown, setToastShown] = useState(false);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
+
 
   useEffect(() => {
     // Show message if user was redirected here (only once)
@@ -114,5 +118,20 @@ export default function LoginPage(){
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

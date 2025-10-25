@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { showToast } from '@/components/Toast';
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 type Item = {
   id: string;
   title: string;
