@@ -107,6 +107,9 @@ enum AdminAction {
   RESOLVE
    DONATE
    DISPOSE
+  HANDOFF_START
+  HANDOFF_COMPLETE
+  HANDOFF_RESET
 }
 
 model Notification {
@@ -130,4 +133,32 @@ enum NotificationType {
   ITEM_CLAIMED
   ITEM_RESOLVED
   MATCH_FOUND
+}
+
+// Handoff session for 2-way mutual verification (owner and admin)
+// The finder has already given the item to admin, so only owner needs to verify
+model HandoffSession {
+  id                    String   @id @default(cuid())
+  lostItemId            String
+  foundItemId           String
+  ownerUserId           String   // Person who lost the item
+  finderUserId          String   // Person who found it (for reference only)
+  ownerCode             String   // Code shown only to owner
+  adminCode             String   // Code shown only to admin
+  // Mutual verification: both parties must verify each other
+  ownerVerifiedAdmin    Boolean  @default(false) // owner entered admin's code
+  adminVerifiedOwner    Boolean  @default(false) // admin entered owner's code
+  ownerAttempts         Int      @default(0)
+  adminAttempts         Int      @default(0)
+  expiresAt             DateTime
+  locked                Boolean  @default(false)
+  status                String   @default("ACTIVE") // ACTIVE | COMPLETED | EXPIRED | LOCKED
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([lostItemId])
+  @@index([foundItemId])
+  @@index([ownerUserId])
+  @@index([finderUserId])
+  @@index([status, expiresAt])
 }

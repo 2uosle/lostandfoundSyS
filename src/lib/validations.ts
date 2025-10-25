@@ -67,7 +67,7 @@ export const imageUploadSchema = z.object({
 
 // Admin actions validation
 export const adminActionSchema = z.object({
-  action: z.enum(['claim', 'archive', 'match', 'delete', 'donate', 'dispose', 'restore']),
+  action: z.enum(['claim', 'archive', 'match', 'delete', 'donate', 'dispose', 'restore', 'handoff']),
   itemId: z.string().min(1, 'Item ID is required'),
   itemType: z.enum(['LOST', 'FOUND']).default('LOST'),
   matchWithId: z.string().optional(),

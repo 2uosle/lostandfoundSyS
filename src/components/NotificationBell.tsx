@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 
 type Notification = {
@@ -15,6 +16,7 @@ type Notification = {
 };
 
 export default function NotificationBell() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -38,8 +40,8 @@ export default function NotificationBell() {
 
   useEffect(() => {
     loadNotifications();
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(loadNotifications, 30000);
+    // Poll for new notifications every 10 seconds for real-time updates
+    const interval = setInterval(loadNotifications, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -59,6 +61,28 @@ export default function NotificationBell() {
       }
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read
+    if (!notification.read) {
+      await markAsRead(notification.id);
+    }
+
+    // Close dropdown
+    setShowDropdown(false);
+
+    // Navigate based on notification type and itemId
+    if (notification.itemId && notification.itemType === 'LOST') {
+      // Redirect to dashboard with item ID parameter to auto-open modal
+      router.push(`/dashboard?openItem=${notification.itemId}`);
+    } else if (notification.itemId && notification.itemType === 'FOUND') {
+      // For found items, redirect to browse page or dashboard
+      router.push('/dashboard');
+    } else {
+      // Default to dashboard
+      router.push('/dashboard');
     }
   };
 
@@ -145,7 +169,7 @@ export default function NotificationBell() {
                   {notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      onClick={() => !notification.read && markAsRead(notification.id)}
+                      onClick={() => handleNotificationClick(notification)}
                       className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                         !notification.read ? 'bg-blue-50' : ''
                       }`}

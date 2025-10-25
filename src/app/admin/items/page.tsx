@@ -148,11 +148,31 @@ export default function AdminItemsPage() {
 
       if (data.success) {
         showToast(data.data.message, 'success');
+        if (action === 'handoff' && data.data?.handoffSessionId) {
+          const shareUrl = `${location.origin}/handoff/${data.data.handoffSessionId}`;
+          const adminUrl = `${location.origin}/admin/handoff/${data.data.handoffSessionId}`;
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            showToast('Shareable handoff link copied to clipboard', 'success');
+          } catch {}
+          if (confirm('Open the Admin Handoff Console?')) {
+            window.open(adminUrl, '_blank');
+          }
+        }
         if (action === 'match') {
           setMatchingFor(null);
           setCompareView(null);
         }
-        loadItems();
+        // Optimistic local update to avoid list flash and meet UX: hide donated/disposed from Manage list
+        if (action === 'donate') {
+          setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status: 'DONATED' } : i)));
+          // No reload needed; disposition dashboard will show via its own API
+        } else if (action === 'dispose') {
+          setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status: 'DISPOSED' } : i)));
+        } else {
+          // For other actions, refresh from server to keep data in sync
+          loadItems();
+        }
       } else {
         showToast(data.error || 'Action failed', 'error');
       }
@@ -194,10 +214,12 @@ export default function AdminItemsPage() {
     }
   }
 
-  // Filter items - exclude RESOLVED items from this page
+  // Filter items - exclude RESOLVED and (by default) DONATED/DISPOSED from Manage Lost Items
   const filteredItems = items.filter(item => {
     // Don't show RESOLVED items in Manage Lost Items (they go to Activity History)
     if (item.status === 'RESOLVED') return false;
+    // Hide DONATED/DISPOSED by default; they belong to Disposition dashboard
+    if ((item.status === 'DONATED' || item.status === 'DISPOSED') && statusFilter === 'all') return false;
     
     const matchesSearch =
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -391,6 +413,15 @@ export default function AdminItemsPage() {
                        >
                          Mark as Disposed
                        </button>
+                      {item.status === 'MATCHED' && (
+                        <button
+                          onClick={() => handleAction('handoff', item.id)}
+                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                          title="Approve for handoff and generate mutual PINs"
+                        >
+                          Start Handoff
+                        </button>
+                      )}
                       {item.status === 'ARCHIVED' && (
                         <button
                           onClick={() => handleAction('restore', item.id)}

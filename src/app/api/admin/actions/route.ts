@@ -73,6 +73,68 @@ export async function POST(req: Request) {
         return successResponse({ message: 'Item archived successfully' });
       }
 
+      case 'handoff': {
+        // Start a handoff session for a matched lost item
+        const lost = await prisma.lostItem.findUnique({
+          where: { id: itemId },
+          select: { id: true, title: true, userId: true, matchedItemId: true, status: true },
+        });
+        if (!lost) return errorResponse('Lost item not found', 404);
+        if (lost.status !== 'MATCHED') return errorResponse('Item must be MATCHED to start handoff', 400);
+        if (!lost.matchedItemId) return errorResponse('No matched found item to handoff with', 400);
+
+        const found = await prisma.foundItem.findUnique({
+          where: { id: lost.matchedItemId },
+          select: { id: true, userId: true, title: true },
+        });
+        if (!found) return errorResponse('Matched found item not found', 404);
+        if (!lost.userId || !found.userId) return errorResponse('Both parties must be registered users', 400);
+
+        // Generate 2 codes: owner and admin (finder already gave item to admin)
+        const anyPrisma: any = prisma;
+        const ownerCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const adminCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        const hs = await anyPrisma.handoffSession.create({
+          data: {
+            lostItemId: lost.id,
+            foundItemId: found.id,
+            ownerUserId: lost.userId,
+            finderUserId: found.userId,
+            ownerCode,
+            adminCode,
+            expiresAt,
+            status: 'ACTIVE',
+          },
+        });
+
+        // Notify owner with their code (finder is not involved in verification)
+        const notifications = [];
+        if (lost.userId) {
+          notifications.push(
+            prisma.notification.create({
+              data: {
+                userId: lost.userId,
+                type: 'ITEM_MATCHED',
+                title: 'Handoff Ready: Your Code',
+                message: `Your lost item "${lost.title}" is ready for pickup. Your verification code is: ${ownerCode}. Go to the admin desk and exchange codes to claim your item.`,
+                itemId: lost.id,
+                itemType: 'LOST',
+              },
+            })
+          );
+        }
+        if (notifications.length > 0) {
+          await Promise.all(notifications);
+        }
+
+        // Log using an existing AdminAction to avoid enum mismatch if Prisma Client wasn't regenerated
+        await logActivity(session.user.id, $Enums.AdminAction.MATCH, 'LOST', lost.id, lost.title, { handoffSessionId: hs.id, expiresAt, handoff: 'START' });
+
+        return successResponse({ message: 'Handoff session created', handoffSessionId: hs.id, expiresAt });
+      }
+
       case 'claim': {
         // Get item details before claiming
         const item = await prisma.lostItem.findUnique({

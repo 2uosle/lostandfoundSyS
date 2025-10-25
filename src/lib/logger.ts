@@ -1,5 +1,6 @@
 import pino from 'pino';
 
+// Disable pino-pretty transport to avoid thread-stream worker errors in Next.js
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   formatters: {
@@ -10,15 +11,9 @@ const logger = pino({
     paths: ['req.headers.authorization', 'password', 'token', 'secret'],
     remove: true,
   },
+  // Simple console output instead of pino-pretty to avoid worker thread issues
   ...(process.env.NODE_ENV === 'development' && {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'HH:MM:ss Z',
-        ignore: 'pid,hostname',
-      },
-    },
+    base: undefined,
   }),
 });
 
