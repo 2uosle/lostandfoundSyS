@@ -1,6 +1,6 @@
 // NextAuth route handler - imports configuration from @/lib/auth
 import NextAuth from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authOptions as authConfig } from "@/lib/auth";
 
-const handler = NextAuth(authOptions);
+const handler = NextAuth(authConfig);
 export { handler as GET, handler as POST };
