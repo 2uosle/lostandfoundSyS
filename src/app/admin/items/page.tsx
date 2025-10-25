@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { showToast } from '@/components/Toast';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 type Item = {
   id: string;
@@ -48,6 +50,16 @@ type MatchCandidate = {
 };
 
 export default function AdminItemsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      router.push('/login?error=unauthorized');
+    }
+  }, [session, status, router]);
+
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [matchCandidates, setMatchCandidates] = useState<MatchCandidate[]>([]);
@@ -56,6 +68,33 @@ export default function AdminItemsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+
+  function exportToCSV() {
+    const headers = ['ID','Title','Description','Category','Location','LostDate','Status','Contact','CreatedAt','ReporterName','ReporterEmail'];
+    const rows = filteredItems.map((i) => [
+      i.id,
+      i.title,
+      (i.description || '').replace(/\n/g,' '),
+      i.category,
+      i.location || '',
+      i.lostDate ? new Date(i.lostDate).toISOString() : '',
+      i.status,
+      i.contactInfo || '',
+      new Date(i.createdAt).toISOString(),
+      i.reportedBy?.name || '',
+      i.reportedBy?.email || '',
+    ]);
+    const csv = [headers, ...rows]
+      .map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g,'""')}"`).join(','))
+      .join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lost-items-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   async function loadItems() {
     setLoading(true);
@@ -190,7 +229,7 @@ export default function AdminItemsPage() {
 
         {/* Filters */}
         <div className="bg-white p-6 rounded-lg shadow-sm mb-6 border border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
               <input
@@ -213,6 +252,8 @@ export default function AdminItemsPage() {
                 <option value="MATCHED">Matched</option>
                 <option value="CLAIMED">Claimed</option>
                 <option value="ARCHIVED">Archived</option>
+                 <option value="DONATED">Donated</option>
+                 <option value="DISPOSED">Disposed</option>
               </select>
             </div>
             <div>
@@ -229,6 +270,15 @@ export default function AdminItemsPage() {
                 <option value="documents">Documents</option>
                 <option value="other">Other</option>
               </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={exportToCSV}
+                className="w-full md:w-auto px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium"
+                title="Export current list to CSV"
+              >
+                Export CSV
+              </button>
             </div>
           </div>
         </div>
@@ -277,6 +327,10 @@ export default function AdminItemsPage() {
                             ? 'bg-green-100 text-green-800'
                             : item.status === 'RESOLVED'
                             ? 'bg-purple-100 text-purple-800'
+                             : item.status === 'DONATED'
+                             ? 'bg-teal-100 text-teal-800'
+                             : item.status === 'DISPOSED'
+                             ? 'bg-red-100 text-red-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
@@ -325,6 +379,26 @@ export default function AdminItemsPage() {
                       >
                         Archive
                       </button>
+                       <button
+                         onClick={() => handleAction('donate', item.id)}
+                         className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
+                       >
+                         Mark as Donated
+                       </button>
+                       <button
+                         onClick={() => handleAction('dispose', item.id)}
+                         className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                       >
+                         Mark as Disposed
+                       </button>
+                      {item.status === 'ARCHIVED' && (
+                        <button
+                          onClick={() => handleAction('restore', item.id)}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                        >
+                          Restore
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"

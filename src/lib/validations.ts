@@ -32,7 +32,7 @@ const itemCategories = ['electronics', 'clothing', 'accessories', 'documents', '
 export const lostItemSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title too long'),
   description: z.string().min(10, 'Description must be at least 10 characters').max(1000, 'Description too long'),
-  category: z.enum(itemCategories, { errorMap: () => ({ message: 'Invalid category' }) }),
+  category: z.enum(itemCategories),
   location: z.string().min(1).max(200).optional(),
   contactInfo: z.string().min(3, 'Contact info is required').max(200),
   lostDate: z.coerce.date().refine(date => date <= new Date(), 'Date cannot be in the future'),
@@ -43,7 +43,7 @@ export const lostItemSchema = z.object({
 export const foundItemSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title too long'),
   description: z.string().min(10, 'Description must be at least 10 characters').max(1000, 'Description too long'),
-  category: z.enum(itemCategories, { errorMap: () => ({ message: 'Invalid category' }) }),
+  category: z.enum(itemCategories),
   location: z.string().min(1, 'Location is required').max(200),
   contactInfo: z.string().min(3, 'Contact info is required').max(200),
   foundDate: z.coerce.date().refine(date => date <= new Date(), 'Date cannot be in the future'),
@@ -67,8 +67,9 @@ export const imageUploadSchema = z.object({
 
 // Admin actions validation
 export const adminActionSchema = z.object({
-  action: z.enum(['claim', 'archive', 'match', 'delete']),
+  action: z.enum(['claim', 'archive', 'match', 'delete', 'donate', 'dispose', 'restore']),
   itemId: z.string().min(1, 'Item ID is required'),
+  itemType: z.enum(['LOST', 'FOUND']).default('LOST'),
   matchWithId: z.string().optional(),
 }).refine(
   (data) => {
@@ -92,7 +93,7 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
   search: z.string().max(200).optional(),
   category: z.enum([...itemCategories, 'all']).default('all'),
-  status: z.enum(['PENDING', 'MATCHED', 'CLAIMED', 'ARCHIVED', 'all']).default('all'),
+  status: z.enum(['PENDING', 'MATCHED', 'CLAIMED', 'ARCHIVED', 'DONATED', 'DISPOSED', 'all']).default('all'),
 });
 
 export type UserInput = z.infer<typeof userSchema>;

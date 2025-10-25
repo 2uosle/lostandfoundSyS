@@ -10,5 +10,10 @@ export default async function ReportFoundItem() {
     redirect('/login?callbackUrl=/found');
   }
 
+  // Only admins can report found items
+  if (session.user.role !== 'ADMIN') {
+    redirect('/dashboard?error=unauthorized');
+  }
+
   return <ItemReportForm type="found" />;
 }

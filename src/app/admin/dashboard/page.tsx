@@ -17,6 +17,22 @@ export default async function AdminDashboard() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link
+            href="/admin/disposition"
+            className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 border-l-4 border-l-teal-600"
+          >
+            <div className="text-4xl mb-3">♻️</div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Disposition</h2>
+            <p className="text-gray-600">View donated and disposed items</p>
+          </Link>
+          <Link
+            href="/found"
+            className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 border-l-4 border-l-green-600"
+          >
+            <div className="text-4xl mb-3">🧾</div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Report Found Item</h2>
+            <p className="text-gray-600">Create a new found item report</p>
+          </Link>
+          <Link
             href="/admin/items"
             className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 border-l-4 border-l-blue-600"
           >

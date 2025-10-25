@@ -3,14 +3,23 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { foundItemSchema, imageUploadSchema } from '@/lib/validations';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
-import { promises as fs } from 'fs';
+import { saveValidatedImage } from '@/lib/image-validation';
+import logger, { logRequest, logError } from '@/lib/logger';
 import path from 'path';
 
 export async function POST(req: Request) {
+  const startTime = Date.now();
+  let userId: string | undefined;
+  
   try {
     const body = await req.json();
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
+    userId = session?.user?.id;
+
+    // Only admins can report found items
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return errorResponse('Unauthorized - Only admins can report found items', 403);
+    }
 
     // Image is required for found items
     if (!body.image) {
@@ -31,53 +40,36 @@ export async function POST(req: Request) {
     // Validate image
     imageUploadSchema.parse({ image: body.image });
 
-    // Create the found item record
-    const item = await prisma.foundItem.create({
-      data: {
-        title: validatedItem.title,
-        description: validatedItem.description,
-        location: validatedItem.location,
-        foundDate: validatedItem.foundDate,
-        category: validatedItem.category,
-        contactInfo: validatedItem.contactInfo,
-        status: 'PENDING',
-        userId: validatedItem.userId,
-      },
+    // Use transaction to ensure atomicity
+    const item = await prisma.$transaction(async (tx) => {
+      // Create the found item record
+      const createdItem = await tx.foundItem.create({
+        data: {
+          title: validatedItem.title,
+          description: validatedItem.description,
+          location: validatedItem.location,
+          foundDate: validatedItem.foundDate,
+          category: validatedItem.category,
+          contactInfo: validatedItem.contactInfo,
+          status: 'PENDING',
+          userId: validatedItem.userId,
+        },
+      });
+
+      // Handle image upload within transaction
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      const imageUrl = await saveValidatedImage(body.image, createdItem.id, uploadsDir);
+      
+      // Update item with image URL
+      const updatedItem = await tx.foundItem.update({
+        where: { id: createdItem.id },
+        data: { imageUrl },
+      });
+      
+      return updatedItem;
     });
 
-    // Handle image upload asynchronously
-    if (body.image) {
-      try {
-        const matches = /^data:(image\/(png|jpeg));base64,(.+)$/.exec(body.image);
-        if (matches) {
-          const ext = matches[2] === 'jpeg' ? 'jpg' : matches[2];
-          const b64 = matches[3];
-          const buffer = Buffer.from(b64, 'base64');
-          const filename = `${item.id}.${ext}`;
-          
-          // Ensure uploads directory exists
-          const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-          await fs.mkdir(uploadsDir, { recursive: true });
-          
-          // Write file asynchronously
-          const outPath = path.join(uploadsDir, filename);
-          await fs.writeFile(outPath, buffer);
-          
-          // Update item with image URL
-          await prisma.foundItem.update({
-            where: { id: item.id },
-            data: { imageUrl: `/uploads/${filename}` }
-          });
-          
-          item.imageUrl = `/uploads/${filename}`;
-        }
-      } catch (imageError) {
-        console.error('Failed to save image:', imageError);
-        // Continue without image rather than failing the entire request
-      }
-    }
-
-    // Find potential matches among lost items
+    // Find potential matches among lost items (outside transaction for performance)
     const potentialMatches = await prisma.lostItem.findMany({
       where: {
         status: 'PENDING',
@@ -86,11 +78,17 @@ export async function POST(req: Request) {
       take: 5,
     });
 
+    const duration = Date.now() - startTime;
+    logRequest('POST', '/api/items/found', userId, duration, 201);
+
     return successResponse({
       item,
       potentialMatches: potentialMatches.length,
     }, 201);
   } catch (error) {
+    const duration = Date.now() - startTime;
+    logError(error as Error, { endpoint: '/api/items/found', userId });
+    logRequest('POST', '/api/items/found', userId, duration, 500, (error as Error).message);
     return handleApiError(error);
   }
 }

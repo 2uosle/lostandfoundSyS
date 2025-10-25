@@ -78,16 +78,16 @@ export const authOptions: NextAuthOptions = {
           }
         });
 
-        if (!user) {
-          throw new Error('Invalid credentials');
-        }
+        // Use constant-time comparison to prevent timing attacks
+        // Always run bcrypt.compare even if user doesn't exist
+        const passwordMatch = user && user.password
+          ? await bcrypt.compare(validatedCreds.data.password, user.password)
+          : await bcrypt.compare(
+              validatedCreds.data.password,
+              '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5gu0jhodg.WC2' // Dummy hash for timing equality
+            );
 
-        const passwordMatch = await bcrypt.compare(
-          validatedCreds.data.password,
-          user.password
-        );
-
-        if (!passwordMatch) {
+        if (!user || !user.password || !passwordMatch) {
           throw new Error('Invalid credentials');
         }
 

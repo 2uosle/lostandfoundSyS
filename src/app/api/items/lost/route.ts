@@ -3,14 +3,18 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { lostItemSchema, imageUploadSchema } from '@/lib/validations';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
-import { promises as fs } from 'fs';
+import { saveValidatedImage } from '@/lib/image-validation';
+import logger, { logRequest, logError } from '@/lib/logger';
 import path from 'path';
 
 export async function POST(req: Request) {
+  const startTime = Date.now();
+  let userId: string | undefined;
+  
   try {
     const body = await req.json();
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
+    userId = session?.user?.id;
 
     // Validate item data
     const validatedItem = lostItemSchema.parse({
@@ -28,53 +32,40 @@ export async function POST(req: Request) {
       imageUploadSchema.parse({ image: body.image });
     }
 
-    // Create the lost item record
-    const item = await prisma.lostItem.create({
-      data: {
-        title: validatedItem.title,
-        description: validatedItem.description,
-        location: validatedItem.location,
-        lostDate: validatedItem.lostDate,
-        category: validatedItem.category,
-        contactInfo: validatedItem.contactInfo,
-        status: 'PENDING',
-        userId: validatedItem.userId,
-      },
+    // Use transaction to ensure atomicity
+    const item = await prisma.$transaction(async (tx) => {
+      // Create the lost item record
+      const createdItem = await tx.lostItem.create({
+        data: {
+          title: validatedItem.title,
+          description: validatedItem.description,
+          location: validatedItem.location,
+          lostDate: validatedItem.lostDate,
+          category: validatedItem.category,
+          contactInfo: validatedItem.contactInfo,
+          status: 'PENDING',
+          userId: validatedItem.userId,
+        },
+      });
+
+      // Handle image upload within transaction
+      if (body.image) {
+        const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+        const imageUrl = await saveValidatedImage(body.image, createdItem.id, uploadsDir);
+        
+        // Update item with image URL
+        const updatedItem = await tx.lostItem.update({
+          where: { id: createdItem.id },
+          data: { imageUrl },
+        });
+        
+        return updatedItem;
+      }
+      
+      return createdItem;
     });
 
-    // Handle image upload asynchronously
-    if (body.image) {
-      try {
-        const matches = /^data:(image\/(png|jpeg));base64,(.+)$/.exec(body.image);
-        if (matches) {
-          const ext = matches[2] === 'jpeg' ? 'jpg' : matches[2];
-          const b64 = matches[3];
-          const buffer = Buffer.from(b64, 'base64');
-          const filename = `${item.id}.${ext}`;
-          
-          // Ensure uploads directory exists
-          const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-          await fs.mkdir(uploadsDir, { recursive: true });
-          
-          // Write file asynchronously
-          const outPath = path.join(uploadsDir, filename);
-          await fs.writeFile(outPath, buffer);
-          
-          // Update item with image URL
-          await prisma.lostItem.update({
-            where: { id: item.id },
-            data: { imageUrl: `/uploads/${filename}` }
-          });
-          
-          item.imageUrl = `/uploads/${filename}`;
-        }
-      } catch (imageError) {
-        console.error('Failed to save image:', imageError);
-        // Continue without image rather than failing the entire request
-      }
-    }
-
-    // Find potential matches among found items
+    // Find potential matches among found items (outside transaction for performance)
     const potentialMatches = await prisma.foundItem.findMany({
       where: {
         status: 'PENDING',
@@ -83,11 +74,17 @@ export async function POST(req: Request) {
       take: 5,
     });
 
+    const duration = Date.now() - startTime;
+    logRequest('POST', '/api/items/lost', userId, duration, 201);
+
     return successResponse({
       item,
       potentialMatches: potentialMatches.length,
     }, 201);
   } catch (error) {
+    const duration = Date.now() - startTime;
+    logError(error as Error, { endpoint: '/api/items/lost', userId });
+    logRequest('POST', '/api/items/lost', userId, duration, 500, (error as Error).message);
     return handleApiError(error);
   }
 }

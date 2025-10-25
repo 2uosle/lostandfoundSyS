@@ -46,7 +46,6 @@ export async function POST(
       where: { id },
       select: { 
         userId: true, 
-        matchedItemId: true,
         status: true,
         title: true,
         category: true,
@@ -58,70 +57,37 @@ export async function POST(
       return errorResponse('Item not found', 404);
     }
 
-    // Users can only resolve their own items
+    // Users can only donate their own items
     if (lostItem.userId !== session.user.id) {
-      return errorResponse('You can only resolve your own items', 403);
+      return errorResponse('You can only donate your own items', 403);
     }
 
-    // Check if item is matched or claimed (can't resolve pending items)
+    // Only allow donate from MATCHED or CLAIMED
     if (lostItem.status !== 'MATCHED' && lostItem.status !== 'CLAIMED') {
-      return errorResponse('Item must be matched or claimed before it can be resolved', 400);
+      return errorResponse('Item must be matched or claimed before it can be donated', 400);
     }
 
-    // Fetch matched found item details if exists
-    let matchedFoundItem = null;
-    if (lostItem.matchedItemId) {
-      matchedFoundItem = await prisma.foundItem.findUnique({
-        where: { id: lostItem.matchedItemId },
-        select: { title: true },
-      });
-    }
+    // Update the lost item to DONATED
+    await prisma.lostItem.update({
+      where: { id },
+      data: { status: 'DONATED' as any },
+    });
 
-    // Update both the lost item and its matched found item
-    const updates = [];
-    
-    // Update the lost item to RESOLVED
-    updates.push(
-      prisma.lostItem.update({
-        where: { id },
-        data: { status: 'RESOLVED' },
-      })
-    );
-
-    // If there's a matched found item, also mark it as RESOLVED
-    if (lostItem.matchedItemId) {
-      updates.push(
-        prisma.foundItem.update({
-          where: { id: lostItem.matchedItemId },
-          data: { status: 'RESOLVED' },
-        })
-      );
-    }
-
-    // Execute all updates in a transaction
-    await prisma.$transaction(updates);
-
-    // Log the resolution activity
+    // Log the donation activity
     await logActivity(
-      'RESOLVE' as $Enums.AdminAction,
+      'DONATE' as $Enums.AdminAction,
       'LOST',
       id,
       lostItem.title,
       session.user.id,
       {
-        matchedWith: lostItem.matchedItemId,
-        matchedTitle: matchedFoundItem?.title,
         category: lostItem.category,
         location: lostItem.location,
       }
     );
 
-    return successResponse({ 
-      message: 'Item marked as resolved',
-      matchedItemAlsoResolved: !!lostItem.matchedItemId 
-    });
+    return successResponse({ message: 'Item marked as donated' });
   } catch (error) {
     return handleApiError(error);
   }
 }
-

@@ -38,16 +38,20 @@ export default function Navigation() {
             >
               Report Lost
             </Link>
-            <Link
-              href="/found"
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                isActive('/found')
-                  ? 'bg-green-100 text-green-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              Report Found
-            </Link>
+            
+            {/* Only admins can report found items */}
+            {isAdmin && (
+              <Link
+                href="/found"
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  isActive('/found')
+                    ? 'bg-green-100 text-green-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Report Found
+              </Link>
+            )}
 
             {session?.user && (
               <Link
@@ -59,6 +63,19 @@ export default function Navigation() {
                 }`}
               >
                 My Items
+              </Link>
+            )}
+
+            {session?.user && (
+              <Link
+                href="/donate"
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  isActive('/donate')
+                    ? 'bg-teal-100 text-teal-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Donate Item
               </Link>
             )}
 
@@ -136,16 +153,21 @@ export default function Navigation() {
           >
             Report Lost
           </Link>
-          <Link
-            href="/found"
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-              isActive('/found')
-                ? 'bg-green-100 text-green-700'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Report Found
-          </Link>
+          
+          {/* Only admins can report found items */}
+          {isAdmin && (
+            <Link
+              href="/found"
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                isActive('/found')
+                  ? 'bg-green-100 text-green-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Report Found
+            </Link>
+          )}
+          
           {session?.user && (
             <Link
               href="/dashboard"
@@ -156,6 +178,18 @@ export default function Navigation() {
               }`}
             >
               My Items
+            </Link>
+          )}
+          {session?.user && (
+            <Link
+              href="/donate"
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                isActive('/donate')
+                  ? 'bg-teal-100 text-teal-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Donate Item
             </Link>
           )}
           {isAdmin && (

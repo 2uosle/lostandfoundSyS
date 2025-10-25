@@ -77,6 +77,8 @@ enum ItemStatus {
   CLAIMED
   ARCHIVED
   RESOLVED
+   DONATED
+   DISPOSED
 }
 
 model ActivityLog {
@@ -103,6 +105,8 @@ enum AdminAction {
   DELETE
   RESTORE
   RESOLVE
+   DONATE
+   DISPOSE
 }
 
 model Notification {
