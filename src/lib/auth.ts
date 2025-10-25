@@ -5,6 +5,9 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validations";
 
+// Cast prisma to any for model access to satisfy TypeScript when model typings are not present
+const prismaAny = prisma as any;
+
 // Extend the built-in session types
 declare module "next-auth" {
   interface Session {
@@ -59,11 +62,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           // Validate credentials
-          const validatedFields = loginSchema.parse(credentials);
-          const { email, password } = validatedFields;
+          const { email, password } = loginSchema.parse(credentials);
 
           // Find user by email
-          const user = await prisma.user.findUnique({
+          const user = await prismaAny.user.findUnique({
             where: { email },
           });
 
@@ -107,16 +109,16 @@ export const authOptions: NextAuthOptions = {
         try {
           // Check domain restriction
           if (!isAllowedDomain(user.email)) {
-            return false; // Reject sign-in
+            return false;
           }
 
           // Check if user exists, create if not
-          let dbUser = await prisma.user.findUnique({
+          let dbUser = await prismaAny.user.findUnique({
             where: { email: user.email },
           });
 
           if (!dbUser) {
-            dbUser = await prisma.user.create({
+            dbUser = await prismaAny.user.create({
               data: {
                 email: user.email,
                 name: user.name || "",
@@ -146,12 +148,10 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
-      }
-
-      // For Google OAuth, fetch user from database
-      if (account?.provider === "google" && token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
+      } else if (token.email) {
+        // Refresh token data from database
+        const dbUser = await prismaAny.user.findUnique({
+          where: { email: token.email as string },
         });
 
         if (dbUser) {
