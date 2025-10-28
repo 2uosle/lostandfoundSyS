@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "create-admin": "ts-node ./scripts/create-admin.ts",
     "test": "vitest",
+    "test:rate-limit": "ts-node ./scripts/test-rate-limit.ts",
     "e2e": "playwright test",
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",

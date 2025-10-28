@@ -170,3 +170,17 @@ model HandoffSession {
   @@index([finderUserId])
   @@index([status, expiresAt])
 }
+
+// Distributed rate limiting using database
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   // Composite key: "endpoint:identifier" e.g. "login:192.168.1.1"
+  count     Int      @default(1)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key])
+  @@index([key, expiresAt])
+  @@index([expiresAt])
+}
