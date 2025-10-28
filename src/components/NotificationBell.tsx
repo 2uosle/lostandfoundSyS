@@ -113,6 +113,8 @@ export default function NotificationBell() {
         return '✅';
       case 'ITEM_RESOLVED':
         return '🎉';
+      case 'ITEM_REPORTED':
+        return '📝';
       default:
         return '🔔';
     }

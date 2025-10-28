@@ -59,7 +59,35 @@ export async function POST(req: Request) {
           data: { imageUrl },
         });
         
+        // Create notification for the user
+        if (validatedItem.userId) {
+          await tx.notification.create({
+            data: {
+              userId: validatedItem.userId,
+              type: 'ITEM_REPORTED' as any,
+              title: 'Lost Item Reported',
+              message: `Your lost item "${validatedItem.title}" has been successfully reported. We'll notify you if we find a match.`,
+              itemId: createdItem.id,
+              itemType: 'LOST',
+            },
+          });
+        }
+        
         return updatedItem;
+      }
+      
+      // Create notification for the user (when no image)
+      if (validatedItem.userId) {
+        await tx.notification.create({
+          data: {
+            userId: validatedItem.userId,
+            type: 'ITEM_REPORTED' as any,
+            title: 'Lost Item Reported',
+            message: `Your lost item "${validatedItem.title}" has been successfully reported. We'll notify you if we find a match.`,
+            itemId: createdItem.id,
+            itemType: 'LOST',
+          },
+        });
       }
       
       return createdItem;

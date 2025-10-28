@@ -66,6 +66,20 @@ export async function POST(req: Request) {
         data: { imageUrl },
       });
       
+      // Create notification for the admin
+      if (validatedItem.userId) {
+        await tx.notification.create({
+          data: {
+            userId: validatedItem.userId,
+            type: 'ITEM_REPORTED' as any,
+            title: 'Found Item Reported',
+            message: `Found item "${validatedItem.title}" has been successfully reported. We'll check for potential matches.`,
+            itemId: createdItem.id,
+            itemType: 'FOUND',
+          },
+        });
+      }
+      
       return updatedItem;
     });
 

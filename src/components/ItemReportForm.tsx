@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { showToast } from './Toast';
 
 type ItemReportFormProps = {
   type: 'lost' | 'found';
@@ -13,6 +14,8 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submittedItemTitle, setSubmittedItemTitle] = useState('');
 
   const isLost = type === 'lost';
   const title = isLost ? 'Report Lost Item' : 'Report Found Item';
@@ -96,10 +99,18 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
       }
 
       // Success
+      const itemTitle = (formData.get('title') as string) || 'Item';
+      setSubmittedItemTitle(itemTitle);
+      setShowSuccessModal(true);
+      showToast(
+        isLost 
+          ? 'Lost item report submitted successfully!' 
+          : 'Found item report submitted successfully!',
+        'success'
+      );
+      
       if (onSuccess) {
         onSuccess();
-      } else {
-        router.push(`/?status=${type}-reported`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -107,6 +118,11 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    router.push('/dashboard');
   };
 
   return (
@@ -331,6 +347,58 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
             </button>
           </div>
         </form>
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in duration-300">
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                  <svg
+                    className="h-10 w-10 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  Successfully Submitted!
+                </h3>
+                <p className="text-gray-600 mb-1">
+                  Your {isLost ? 'lost' : 'found'} item report for
+                </p>
+                <p className="text-lg font-semibold text-gray-900 mb-4">
+                  "{submittedItemTitle}"
+                </p>
+                <p className="text-gray-600 mb-6">
+                  has been submitted successfully. {isLost ? "We'll notify you if we find a match." : "We'll check for potential matches."}
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  You can also check your notifications for updates.
+                </p>
+                <button
+                  onClick={handleCloseModal}
+                  className={`w-full px-6 py-3 text-white rounded-xl font-semibold
+                    ${isLost 
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800' 
+                      : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                    }
+                    transition-all duration-200 shadow-lg hover:shadow-xl
+                    focus:outline-none focus:ring-2 focus:ring-blue-500/30`}
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
