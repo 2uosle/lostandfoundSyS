@@ -46,6 +46,23 @@ export default function HandoffPage() {
     }
   }, [session, handoffId]);
 
+  // Subscribe to SSE for near-instant updates
+  useEffect(() => {
+    if (!handoffId) return;
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(`/api/handoff/${handoffId}/events`);
+      es.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg?.data) setSessionData(msg.data);
+        } catch {}
+      };
+      es.onerror = () => { /* silently fall back to poll on errors */ };
+    } catch {}
+    return () => { try { es?.close(); } catch {} };
+  }, [handoffId]);
+
   async function submitCode() {
     if (otherCode.trim().length === 0) return;
     setSubmitting(true);

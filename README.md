@@ -30,6 +30,15 @@ A modern, full-featured Lost & Found management system built with Next.js 15, fe
 - 📱 Fully responsive
 - 🔔 Toast notifications
 - ⚡ Fast and optimized
+- 🌓 Light/dark mode support
+
+🔒 **Security & Performance**
+- 🛡️ **Distributed rate limiting** (database-backed, works across instances)
+- 🚫 Protection against brute-force attacks
+- 🔐 Secure authentication with bcrypt
+- 📊 Activity logging and audit trails
+- ⚡ Optimized database queries with indexes
+- 🌐 Security headers (CSP, HSTS, etc.)
 
 ## Getting Started
 

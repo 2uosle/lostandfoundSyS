@@ -44,29 +44,22 @@ export default function AdminHandoffConsole() {
     if (session?.user && id) load({ initial: true });
   }, [session, id]);
 
-  // Auto-refresh every 3 seconds for real-time updates
-  const pollRef = useRef<number | null>(null);
+  // Prefer SSE; fallback polling is no longer necessary for normal flow
   useEffect(() => {
-    if (!info) return;
-    const done = info.status === 'COMPLETED';
-    const expired = info.status === 'EXPIRED';
-    if (done || expired) return;
-
-    function start() {
-      if (pollRef.current != null) return;
-      pollRef.current = window.setInterval(() => { load(); }, 5000);
-    }
-    function stop() {
-      if (pollRef.current != null) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-    }
-    if (!document.hidden) start();
-    const onVisibility = () => { document.hidden ? stop() : start(); };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => { document.removeEventListener('visibilitychange', onVisibility); stop(); };
-  }, [session, id, info]);
+    if (!id) return;
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(`/api/admin/handoff/${id}/events`);
+      es.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg?.data) setInfo(msg.data);
+        } catch {}
+      };
+      es.onerror = () => { /* ignore transient errors */ };
+    } catch {}
+    return () => { try { es?.close(); } catch {} };
+  }, [id]);
 
   async function submit(code: string) {
     if (!code || code.length !== 6) return;

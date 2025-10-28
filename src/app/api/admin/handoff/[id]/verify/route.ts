@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
 import { HANDOFF_MAX_ATTEMPTS, isExpired, isHandoffComplete } from '@/lib/handoff';
 import { $Enums } from '@prisma/client';
+import { emitHandoffUpdate } from '@/lib/handoff-events';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -23,14 +24,15 @@ export async function POST(req: Request, context: RouteContext) {
     const hs = await anyPrisma.handoffSession.findUnique({ where: { id } });
     if (!hs) return errorResponse('Session not found', 404);
 
-    if (hs.locked) return errorResponse('Session is locked', 423);
-    if (isExpired(hs.expiresAt) || hs.status !== 'ACTIVE') return errorResponse('Session expired', 410);
+  if (hs.locked) return errorResponse('Session is locked', 423);
+  if (isExpired(hs.expiresAt) || hs.status !== 'ACTIVE') return errorResponse('Session expired', 410);
 
     const attemptsField = 'adminAttempts'; // Admin's attempts
     const expectedCode = hs.ownerCode; // Check the owner's code
 
     if (hs[attemptsField] >= HANDOFF_MAX_ATTEMPTS) {
-      await anyPrisma.handoffSession.update({ where: { id: hs.id }, data: { locked: true, status: 'LOCKED' } });
+      await anyPrisma.handoffSession.update({ where: { id: hs.id }, data: { locked: true, status: 'LOCKED' as any } });
+      emitHandoffUpdate(hs.id);
       return errorResponse('Attempt limit exceeded; session locked', 423);
     }
 
@@ -38,7 +40,8 @@ export async function POST(req: Request, context: RouteContext) {
     const updateData: any = { [attemptsField]: hs[attemptsField] + 1 };
     if (correct) updateData.adminVerifiedOwner = true;
 
-    const updated = await anyPrisma.handoffSession.update({ where: { id: hs.id }, data: updateData });
+  const updated = await anyPrisma.handoffSession.update({ where: { id: hs.id }, data: updateData });
+  emitHandoffUpdate(hs.id);
 
     if (!correct) return errorResponse('Incorrect code', 400);
 
@@ -58,7 +61,8 @@ export async function POST(req: Request, context: RouteContext) {
           },
         });
       }
-      await anyPrisma.handoffSession.update({ where: { id: hs.id }, data: { status: 'COMPLETED' } });
+  await anyPrisma.handoffSession.update({ where: { id: hs.id }, data: { status: 'COMPLETED' as any } });
+  emitHandoffUpdate(hs.id);
       return successResponse({ message: 'Owner verified! Handoff complete - item marked as claimed.' });
     }
 

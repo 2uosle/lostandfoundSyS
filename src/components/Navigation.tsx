@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navigation() {
   const { data: session, status } = useSession();
@@ -14,6 +15,7 @@ export default function Navigation() {
 
   return (
     <nav className="bg-white/80 border-b border-gray-200 
+                    dark:bg-gray-900/80 dark:border-gray-800
                     sticky top-0 z-40 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -32,8 +34,8 @@ export default function Navigation() {
               href="/lost"
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 isActive('/lost')
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
               }`}
             >
               Report Lost
@@ -45,8 +47,8 @@ export default function Navigation() {
                 href="/found"
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                   isActive('/found')
-                    ? 'bg-green-100 text-green-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
                 }`}
               >
                 Report Found
@@ -58,8 +60,8 @@ export default function Navigation() {
                 href="/dashboard"
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                   isActive('/dashboard')
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
                 }`}
               >
                 My Items
@@ -71,8 +73,8 @@ export default function Navigation() {
                 href="/donate"
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                   isActive('/donate')
-                    ? 'bg-teal-100 text-teal-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
                 }`}
               >
                 Donate Item
@@ -84,8 +86,8 @@ export default function Navigation() {
                 href="/admin/dashboard"
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                   pathname.startsWith('/admin')
-                    ? 'bg-red-100 text-red-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
                 }`}
               >
                 Admin
@@ -97,20 +99,22 @@ export default function Navigation() {
           <div className="flex items-center space-x-3">
             {/* Notification Bell - Only show for logged-in users */}
             {session?.user && <NotificationBell />}
+            {/* Theme toggle */}
+            <ThemeToggle />
             
             {status === 'loading' ? (
               <div className="w-20 h-9 bg-gray-200 animate-pulse rounded-lg"></div>
             ) : session?.user ? (
               <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-700 hidden sm:inline font-medium">
+                <span className="text-sm text-gray-700 dark:text-gray-200 hidden sm:inline font-medium">
                   {session.user.email}
                 </span>
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 
-                           hover:text-gray-900
-                           border border-gray-300 rounded-lg 
-                           hover:bg-gray-50 transition-all"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200
+                           hover:text-gray-900 dark:hover:text-white
+                           border border-gray-300 dark:border-gray-700 rounded-lg 
+                           hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
                   Sign Out
                 </button>
@@ -119,8 +123,8 @@ export default function Navigation() {
               <div className="flex items-center space-x-2">
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 
-                           hover:text-gray-900 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200
+                           hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Sign In
                 </Link>
@@ -140,15 +144,15 @@ export default function Navigation() {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden border-t border-gray-200 px-4 py-3 
-                      bg-gray-50/50">
+      <div className="md:hidden border-t border-gray-200 dark:border-gray-800 px-4 py-3 
+                      bg-gray-50/50 dark:bg-gray-900/50">
         <div className="flex flex-wrap gap-2">
           <Link
             href="/lost"
             className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
               isActive('/lost')
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
             }`}
           >
             Report Lost
@@ -160,8 +164,8 @@ export default function Navigation() {
               href="/found"
               className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                 isActive('/found')
-                  ? 'bg-green-100 text-green-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
               }`}
             >
               Report Found
@@ -173,8 +177,8 @@ export default function Navigation() {
               href="/dashboard"
               className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                 isActive('/dashboard')
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
               }`}
             >
               My Items
@@ -183,10 +187,10 @@ export default function Navigation() {
           {session?.user && (
             <Link
               href="/donate"
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                 isActive('/donate')
-                  ? 'bg-teal-100 text-teal-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
               }`}
             >
               Donate Item
@@ -195,10 +199,10 @@ export default function Navigation() {
           {isAdmin && (
             <Link
               href="/admin/dashboard"
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                 pathname.startsWith('/admin')
-                  ? 'bg-red-100 text-red-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
               }`}
             >
               Admin

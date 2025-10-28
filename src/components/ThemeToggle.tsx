@@ -1,19 +1,52 @@
 "use client";
 
-import { useTheme } from './ThemeProvider';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 
 export default function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+    console.log('🔧 ThemeToggle mounted');
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      console.log('🔧 Theme state:', { theme, resolvedTheme });
+    }
+  }, [theme, resolvedTheme, mounted]);
+
+  if (!mounted) {
+    return (
+      <div className="p-2 w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800" />
+    );
+  }
+
+  const handleToggle = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    console.log('🔧 Toggle clicked! Current:', theme, '→ New:', newTheme);
+    console.log('🔧 HTML classes BEFORE toggle:', document.documentElement.className);
+    setTheme(newTheme);
+    
+    // Force check after a short delay
+    setTimeout(() => {
+      console.log('🔧 HTML classes AFTER toggle:', document.documentElement.className);
+      console.log('🔧 localStorage theme:', localStorage.getItem('theme'));
+    }, 100);
+  };
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={handleToggle}
       className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 
                  transition-colors duration-200"
       aria-label="Toggle theme"
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
-      {theme === 'dark' ? (
+      {resolvedTheme === 'dark' ? (
         <svg
           className="w-5 h-5 text-yellow-500"
           fill="currentColor"

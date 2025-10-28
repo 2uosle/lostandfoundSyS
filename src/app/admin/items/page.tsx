@@ -231,7 +231,7 @@ export default function AdminItemsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Back Button */}
         <Link 
@@ -245,29 +245,29 @@ export default function AdminItemsPage() {
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Manage Lost Items</h1>
-          <p className="text-gray-600 mt-2">Review and manage all reported lost items</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Manage Lost Items</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Review and manage all reported lost items</p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-6 border border-gray-200">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm mb-6 border border-gray-200 dark:border-gray-800">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by title or description..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Statuses</option>
                 <option value="PENDING">Pending</option>
@@ -279,11 +279,11 @@ export default function AdminItemsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Categories</option>
                 <option value="electronics">Electronics</option>
@@ -312,10 +312,10 @@ export default function AdminItemsPage() {
             <p className="text-gray-600">Loading items...</p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-12 text-center">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm p-12 text-center">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No items found</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No items found</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all'
                 ? 'Try adjusting your filters'
                 : 'No lost items have been reported yet'}
@@ -324,7 +324,7 @@ export default function AdminItemsPage() {
         ) : (
           <div className="space-y-4">
             {filteredItems.map((item) => (
-              <div key={item.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+              <div key={item.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
                 <div className="flex gap-6">
                   {item.imageUrl && (
                     <img
@@ -336,8 +336,8 @@ export default function AdminItemsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{item.description}</p>
                       </div>
                       <span
                         className={`px-3 py-1 text-xs font-medium rounded-full flex-shrink-0 ml-4 ${
@@ -361,11 +361,11 @@ export default function AdminItemsPage() {
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
                       <div>
-                        <span className="font-medium text-gray-700">Category:</span>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Category:</span>
                         <span className="ml-2 capitalize">{item.category}</span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-700">Location:</span>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Location:</span>
                         <span className="ml-2">{item.location || 'N/A'}</span>
                       </div>
                       <div>

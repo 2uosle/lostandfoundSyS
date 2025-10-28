@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { adminActionSchema } from '@/lib/validations';
 import { sendEmail } from '@/lib/email';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
+import { emitHandoffUpdate } from '@/lib/handoff-events';
 
 /**
  * Helper function to log admin activity
@@ -105,9 +106,11 @@ export async function POST(req: Request) {
             ownerCode,
             adminCode,
             expiresAt,
-            status: 'ACTIVE',
+            status: 'ACTIVE' as any,
           },
         });
+        // push update to SSE consumers
+        emitHandoffUpdate(hs.id);
 
         // Notify owner with their code (finder is not involved in verification)
         const notifications = [];

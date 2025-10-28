@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
 import { generateCode, HANDOFF_TTL_MS } from '@/lib/handoff';
 import { $Enums } from '@prisma/client';
+import { emitHandoffUpdate } from '@/lib/handoff-events';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,11 +29,12 @@ export async function POST(_req: Request, context: RouteContext) {
         adminAttempts: 0,
         ownerVerifiedAdmin: false,
         adminVerifiedOwner: false,
-        locked: false,
-        status: 'ACTIVE',
+  locked: false,
+  status: 'ACTIVE' as any,
         expiresAt: new Date(Date.now() + HANDOFF_TTL_MS),
       },
     });
+    emitHandoffUpdate(updated.id);
 
     await prisma.activityLog.create({
       data: {

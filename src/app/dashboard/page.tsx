@@ -228,7 +228,7 @@ function DashboardContent() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your items...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading your items...</p>
         </div>
       </div>
     );
@@ -239,21 +239,21 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Dashboard</h1>
-           <p className="text-gray-600 mt-2">View and manage your lost item reports</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Dashboard</h1>
+           <p className="text-gray-600 dark:text-gray-400 mt-2">View and manage your lost item reports</p>
         </div>
 
         {/* Items Grid */}
          {lostItems.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-12 text-center">
             <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                No lost items yet
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
                Haven't lost anything? Lucky you!
             </p>
             <Link
@@ -269,7 +269,7 @@ function DashboardContent() {
               <div
                 key={item.id}
                 data-item-id={item.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
+                className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
                 onClick={() => setSelectedItem(item)}
               >
                 {item.imageUrl && (
@@ -281,33 +281,33 @@ function DashboardContent() {
                 )}
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                       {item.title}
                     </h3>
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         item.status === 'PENDING'
-                          ? 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                           : item.status === 'MATCHED'
-                          ? 'bg-blue-100 text-blue-800'
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                           : item.status === 'CLAIMED'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                           : item.status === 'RESOLVED'
-                          ? 'bg-purple-100 text-purple-800'
+                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
                           : item.status === 'DONATED'
-                          ? 'bg-teal-100 text-teal-800'
+                          ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
                           : item.status === 'DISPOSED'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                       }`}
                     >
                       {item.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                     {item.description}
                   </p>
-                  <div className="space-y-1 text-xs text-gray-500 mb-3">
+                  <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
                     <div className="flex items-center">
                       <span className="font-medium mr-2">Category:</span>
                       <span className="capitalize">{item.category}</span>
@@ -341,7 +341,7 @@ function DashboardContent() {
                           loadHandoffSession(item.id);
                         }
                       }}
-                      className="w-full mb-3 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                      className="w-full mb-3 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors text-sm font-medium flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={expandedId === item.id ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
@@ -354,40 +354,40 @@ function DashboardContent() {
                   {expandedId === item.id && (
                     <div 
                       onClick={(e) => e.stopPropagation()}
-                      className="mb-3 p-4 bg-indigo-50 border border-indigo-200 rounded-lg"
+                      className="mb-3 p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-lg"
                     >
                       {!handoffSessions[item.id] ? (
                         <div className="text-center py-4">
                           <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                          <p className="text-sm text-indigo-700">Loading handoff details...</p>
+                          <p className="text-sm text-indigo-700 dark:text-indigo-300">Loading handoff details...</p>
                         </div>
                       ) : handoffSessions[item.id].message ? (
-                        <div className="text-center py-4 text-sm text-indigo-700">
+                        <div className="text-center py-4 text-sm text-indigo-700 dark:text-indigo-300">
                           {handoffSessions[item.id].message}
                         </div>
                       ) : (
                         <>
-                          <h4 className="font-semibold text-indigo-900 mb-2">🔐 Your Handoff Code</h4>
-                          <div className="text-2xl font-mono tracking-widest bg-white rounded-lg p-3 text-center mb-3 select-all border border-indigo-300">
+                          <h4 className="font-semibold text-indigo-900 dark:text-indigo-200 mb-2">🔐 Your Handoff Code</h4>
+                          <div className="text-2xl font-mono tracking-widest bg-white dark:bg-gray-950 rounded-lg p-3 text-center mb-3 select-all border border-indigo-300 dark:border-indigo-800">
                             {handoffSessions[item.id].ownerCode}
                           </div>
-                          <p className="text-xs text-indigo-700 mb-3">Show this code to the admin during handoff.</p>
+                          <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3">Show this code to the admin during handoff.</p>
                       
                       <div className="text-xs mb-3">
-                        <div className={`p-2 rounded ${handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                        <div className={`p-2 rounded ${handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
                           Verification: {handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner ? 'Complete ✓' : 'Pending'}
                           {handoffSessions[item.id].ownerVerifiedAdmin && !handoffSessions[item.id].adminVerifiedOwner && (
-                            <span className="block text-[10px] text-blue-600">✓ You verified admin's code</span>
+                            <span className="block text-[10px] text-blue-600 dark:text-blue-300">✓ You verified admin's code</span>
                           )}
                           {!handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner && (
-                            <span className="block text-[10px] text-blue-600">✓ Admin verified your code</span>
+                            <span className="block text-[10px] text-blue-600 dark:text-blue-300">✓ Admin verified your code</span>
                           )}
                         </div>
                       </div>
 
                       {!(handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner) ? (
                         <>
-                          <label className="block text-sm font-medium text-indigo-900 mb-2">
+                          <label className="block text-sm font-medium text-indigo-900 dark:text-indigo-200 mb-2">
                             Enter the admin's code to verify
                           </label>
                           <input
@@ -396,7 +396,7 @@ function DashboardContent() {
                             pattern="[0-9]*"
                             value={handoffInput[item.id] || ''}
                             onChange={(e) => setHandoffInput({ ...handoffInput, [item.id]: e.target.value.replace(/\D/g, '').slice(0,6) })}
-                            className="w-full px-4 py-2 border border-indigo-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest mb-2"
+                            className="w-full px-4 py-2 border border-indigo-300 dark:border-indigo-800 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest mb-2"
                             placeholder="6-digit code"
                           />
                           <button
@@ -404,7 +404,7 @@ function DashboardContent() {
                             disabled={verifyingHandoff !== null || (handoffInput[item.id] || '').length !== 6}
                             className={`w-full px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                               verifyingHandoff || (handoffInput[item.id] || '').length !== 6
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                ? 'bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed'
                                 : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                             }`}
                           >
@@ -412,7 +412,7 @@ function DashboardContent() {
                           </button>
                         </>
                       ) : (
-                        <div className="text-center text-green-700 font-medium">
+                        <div className="text-center text-green-700 dark:text-green-300 font-medium">
                           ✓ Both parties verified!
                         </div>
                       )}
@@ -453,8 +453,8 @@ function DashboardContent() {
 
                   {/* Final Status Displays */}
                   {item.status === 'RESOLVED' && (
-                    <div className="w-full px-4 py-2 bg-purple-50 border border-purple-200 rounded-lg text-center">
-                      <div className="flex items-center justify-center gap-2 text-purple-700">
+                    <div className="w-full px-4 py-2 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg text-center">
+                      <div className="flex items-center justify-center gap-2 text-purple-700 dark:text-purple-300">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -465,8 +465,8 @@ function DashboardContent() {
                     </div>
                   )}
                   {item.status === 'DONATED' && (
-                    <div className="w-full px-4 py-2 bg-teal-50 border border-teal-200 rounded-lg text-center">
-                      <div className="flex items-center justify-center gap-2 text-teal-700">
+                    <div className="w-full px-4 py-2 bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 rounded-lg text-center">
+                      <div className="flex items-center justify-center gap-2 text-teal-700 dark:text-teal-300">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3 0 2.25 3 5 3 5s3-2.75 3-5c0-1.657-1.343-3-3-3z" />
                         </svg>
@@ -475,8 +475,8 @@ function DashboardContent() {
                     </div>
                   )}
                   {item.status === 'DISPOSED' && (
-                    <div className="w-full px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-center">
-                      <div className="flex items-center justify-center gap-2 text-red-700">
+                    <div className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-center">
+                      <div className="flex items-center justify-center gap-2 text-red-700 dark:text-red-300">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10" />
                         </svg>
@@ -494,12 +494,12 @@ function DashboardContent() {
       {/* Item Details Modal */}
       {selectedItem && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4 z-50" onClick={() => setSelectedItem(null)}>
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Item Details</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Item Details</h2>
               <button
                 onClick={() => setSelectedItem(null)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -517,22 +517,22 @@ function DashboardContent() {
               
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{selectedItem.title}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{selectedItem.title}</h3>
                   <span
                     className={`px-3 py-1 text-sm font-medium rounded-full ${
                       selectedItem.status === 'PENDING'
-                        ? 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                         : selectedItem.status === 'MATCHED'
-                        ? 'bg-blue-100 text-blue-800'
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                         : selectedItem.status === 'CLAIMED'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                         : selectedItem.status === 'RESOLVED'
-                        ? 'bg-purple-100 text-purple-800'
+                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
                         : selectedItem.status === 'DONATED'
-                        ? 'bg-teal-100 text-teal-800'
+                        ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
                         : selectedItem.status === 'DISPOSED'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                     }`}
                   >
                     {selectedItem.status}
@@ -540,34 +540,34 @@ function DashboardContent() {
                 </div>
                 
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
-                  <p className="text-gray-900 whitespace-pre-wrap">{selectedItem.description}</p>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{selectedItem.description}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
-                    <p className="text-gray-900 capitalize">{selectedItem.category}</p>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                    <p className="text-gray-900 dark:text-gray-100 capitalize">{selectedItem.category}</p>
                   </div>
                   {selectedItem.location && (
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">Location</label>
-                      <p className="text-gray-900">{selectedItem.location}</p>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                      <p className="text-gray-900 dark:text-gray-100">{selectedItem.location}</p>
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Date Lost</label>
-                    <p className="text-gray-900">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Date Lost</label>
+                    <p className="text-gray-900 dark:text-gray-100">
                       {format(new Date(selectedItem.lostDate || selectedItem.createdAt), 'MMMM dd, yyyy')}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Contact Info</label>
-                    <p className="text-gray-900">{selectedItem.contactInfo}</p>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Contact Info</label>
+                    <p className="text-gray-900 dark:text-gray-100">{selectedItem.contactInfo}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Reported On</label>
-                    <p className="text-gray-900">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Reported On</label>
+                    <p className="text-gray-900 dark:text-gray-100">
                       {format(new Date(selectedItem.createdAt), 'MMMM dd, yyyy h:mm a')}
                     </p>
                   </div>
@@ -575,40 +575,40 @@ function DashboardContent() {
 
                 {/* Handoff Details in Modal */}
                 {selectedItem.status === 'MATCHED' && (
-                  <div className="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                  <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-lg">
                     {!handoffSessions[selectedItem.id] ? (
                       <div className="text-center py-8">
                         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                        <p className="text-sm text-indigo-700">Loading handoff details...</p>
+                        <p className="text-sm text-indigo-700 dark:text-indigo-300">Loading handoff details...</p>
                       </div>
                     ) : handoffSessions[selectedItem.id].message ? (
-                      <div className="text-center py-8 text-indigo-700">
+                      <div className="text-center py-8 text-indigo-700 dark:text-indigo-300">
                         {handoffSessions[selectedItem.id].message}
                       </div>
                     ) : (
                       <>
-                        <h4 className="font-semibold text-indigo-900 mb-3 text-lg">🔐 Handoff Verification</h4>
-                        <div className="text-2xl font-mono tracking-widest bg-white rounded-lg p-4 text-center mb-3 select-all border border-indigo-300">
+                        <h4 className="font-semibold text-indigo-900 dark:text-indigo-200 mb-3 text-lg">🔐 Handoff Verification</h4>
+                        <div className="text-2xl font-mono tracking-widest bg-white dark:bg-gray-950 rounded-lg p-4 text-center mb-3 select-all border border-indigo-300 dark:border-indigo-800">
                           {handoffSessions[selectedItem.id].ownerCode}
                         </div>
-                        <p className="text-sm text-indigo-700 mb-4">Show this code to the admin during handoff.</p>
+                        <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-4">Show this code to the admin during handoff.</p>
                     
                     <div className="mb-4">
-                      <div className={`p-3 rounded-lg text-center ${handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                      <div className={`p-3 rounded-lg text-center ${handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
                         <div className="font-semibold">Verification Status</div>
                         <div className="text-sm">{handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner ? '✓ Complete' : 'Pending'}</div>
                         {handoffSessions[selectedItem.id].ownerVerifiedAdmin && !handoffSessions[selectedItem.id].adminVerifiedOwner && (
-                          <div className="text-xs text-blue-600 mt-1">✓ You verified admin's code</div>
+                          <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">✓ You verified admin's code</div>
                         )}
                         {!handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner && (
-                          <div className="text-xs text-blue-600 mt-1">✓ Admin verified your code</div>
+                          <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">✓ Admin verified your code</div>
                         )}
                       </div>
                     </div>
 
                     {!(handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner) ? (
                       <>
-                        <label className="block text-sm font-medium text-indigo-900 mb-2">
+                        <label className="block text-sm font-medium text-indigo-900 dark:text-indigo-200 mb-2">
                           Enter the admin's code to verify
                         </label>
                         <input
@@ -617,7 +617,7 @@ function DashboardContent() {
                           pattern="[0-9]*"
                           value={handoffInput[selectedItem.id] || ''}
                           onChange={(e) => setHandoffInput({ ...handoffInput, [selectedItem.id]: e.target.value.replace(/\D/g, '').slice(0,6) })}
-                          className="w-full px-4 py-3 border border-indigo-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest text-lg mb-3"
+                          className="w-full px-4 py-3 border border-indigo-300 dark:border-indigo-800 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest text-lg mb-3"
                           placeholder="6-digit code"
                         />
                         <button
@@ -625,7 +625,7 @@ function DashboardContent() {
                           disabled={verifyingHandoff !== null || (handoffInput[selectedItem.id] || '').length !== 6}
                           className={`w-full px-4 py-3 rounded-lg font-medium transition-all ${
                             verifyingHandoff || (handoffInput[selectedItem.id] || '').length !== 6
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              ? 'bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed'
                               : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'
                           }`}
                         >
@@ -633,7 +633,7 @@ function DashboardContent() {
                         </button>
                       </>
                     ) : (
-                      <div className="text-center py-4 text-green-700 font-semibold text-lg">
+                      <div className="text-center py-4 text-green-700 dark:text-green-300 font-semibold text-lg">
                         ✓ Verification complete!
                       </div>
                     )}
@@ -643,7 +643,7 @@ function DashboardContent() {
                 )}
               </div>
             </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
               {(selectedItem.status === 'MATCHED' || selectedItem.status === 'CLAIMED') && (
                 <button
                   onClick={() => {
@@ -657,7 +657,7 @@ function DashboardContent() {
               )}
               <button
                 onClick={() => setSelectedItem(null)}
-                className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                className="px-6 py-2 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
               >
                 Close
               </button>
@@ -675,7 +675,7 @@ export default function Dashboard() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>
     }>

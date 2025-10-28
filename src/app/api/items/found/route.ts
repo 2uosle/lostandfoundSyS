@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { $Enums } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { foundItemSchema, imageUploadSchema } from '@/lib/validations';
@@ -65,6 +66,20 @@ export async function POST(req: Request) {
         where: { id: createdItem.id },
         data: { imageUrl },
       });
+      
+      // Create notification for the admin
+      if (validatedItem.userId) {
+        await tx.notification.create({
+          data: {
+            userId: validatedItem.userId,
+            type: $Enums.NotificationType.ITEM_REPORTED,
+            title: 'Found Item Reported',
+            message: `Found item "${validatedItem.title}" has been successfully reported. We'll check for potential matches.`,
+            itemId: createdItem.id,
+            itemType: 'FOUND',
+          },
+        });
+      }
       
       return updatedItem;
     });
