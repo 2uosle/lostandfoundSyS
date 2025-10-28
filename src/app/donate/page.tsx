@@ -107,18 +107,18 @@ export default function DonatePage() {
   const eligible = items.filter(i => i.status === 'MATCHED' || i.status === 'CLAIMED');
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Donate an Item</h1>
-          <p className="text-gray-600 mt-2">Donate matched or claimed items to help others.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Donate an Item</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Donate matched or claimed items to help others.</p>
         </div>
 
         {eligible.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-12 text-center">
             <div className="text-6xl mb-4">🎁</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No items available for donation</h3>
-            <p className="text-gray-600 mb-6">Items become eligible once they are matched or claimed.</p>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No items available for donation</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">Items become eligible once they are matched or claimed.</p>
             <Link
               href="/dashboard"
               className="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg font-medium transition-all shadow-lg"
@@ -129,17 +129,17 @@ export default function DonatePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {eligible.map(item => (
-              <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div key={item.id} className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
                 {item.imageUrl && (
                   <img src={item.imageUrl} alt={item.title} className="w-full h-48 object-cover" />
                 )}
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-teal-100 text-teal-800">{item.status}</span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
-                  <div className="space-y-1 text-xs text-gray-500 mb-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{item.description}</p>
+                  <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
                     <div className="flex items-center"><span className="font-medium mr-2">Category:</span><span className="capitalize">{item.category}</span></div>
                     {item.location && (
                       <div className="flex items-center"><span className="font-medium mr-2">Location:</span><span>{item.location}</span></div>

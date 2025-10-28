@@ -126,30 +126,30 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-semibold text-gray-900 mb-3 tracking-tight">
+          <h1 className="text-4xl font-semibold text-gray-900 dark:text-gray-100 mb-3 tracking-tight">
             {title}
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-600 dark:text-gray-400">
             {description}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 shadow-sm">
-            <p className="text-sm text-red-700 font-medium">{error}</p>
+          <div className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 shadow-sm">
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
           </div>
         )}
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-8 bg-white p-8 rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.1)] border border-gray-200"
+          className="space-y-8 bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.1)] border border-gray-200 dark:border-gray-800"
         >
           <div className="space-y-6">
             <div className="group">
-              <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="image" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Photo {isLost ? '(optional)' : '(required)'}
                 {!isLost && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -159,25 +159,25 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 id="image"
                 accept="image/png,image/jpeg"
                 required={!isLost}
-                className="block w-full text-sm text-gray-700 
+                className="block w-full text-sm text-gray-700 dark:text-gray-300 
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-full file:border-0 file:text-sm file:font-semibold
-                  file:bg-gray-100 
-                  file:text-gray-700
-                  hover:file:bg-gray-200 
+                  file:bg-gray-100 dark:file:bg-gray-800 
+                  file:text-gray-700 dark:file:text-gray-200
+                  hover:file:bg-gray-200 dark:hover:file:bg-gray-700 
                   transition-all duration-200"
               />
               {!isLost && (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   A clear photo helps verify the item and return it to the rightful owner.
                 </p>
               )}
             </div>
 
             <div className="group">
-              <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
+              <label htmlFor="title" className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 Item Name
-                <span className="text-gray-400 font-normal ml-1">*</span>
+                <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">*</span>
               </label>
               <input
                 type="text"
@@ -186,32 +186,32 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 required
                 minLength={3}
                 maxLength={100}
-                className="w-full px-4 py-3.5 bg-white 
-                          border border-gray-300 rounded-xl
-                          text-gray-900
-                          placeholder:text-gray-500
+                className="w-full px-4 py-3.5 bg-white dark:bg-gray-950 
+                          border border-gray-300 dark:border-gray-700 rounded-xl
+                          text-gray-900 dark:text-gray-100
+                          placeholder:text-gray-500 dark:placeholder:text-gray-400
                           focus:ring-2 focus:ring-blue-500/50 
                           focus:border-blue-500
-                          hover:border-gray-400
+                          hover:border-gray-400 dark:hover:border-gray-600
                           transition-all duration-200"
                 placeholder={isLost ? "e.g., Blue Nike Backpack" : "e.g., Black Wallet"}
               />
             </div>
 
             <div className="group">
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Category *
               </label>
               <select
                 name="category"
                 id="category"
                 required
-                className="w-full px-4 py-3.5 bg-white 
-                          border border-gray-300 rounded-xl
-                          text-gray-900
+                className="w-full px-4 py-3.5 bg-white dark:bg-gray-950 
+                          border border-gray-300 dark:border-gray-700 rounded-xl
+                          text-gray-900 dark:text-gray-100
                           focus:ring-2 focus:ring-blue-500/50 
                           focus:border-blue-500
-                          hover:border-gray-400
+                          hover:border-gray-400 dark:hover:border-gray-600
                           transition-all duration-200 appearance-none cursor-pointer
                           bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTUgNy41TDEwIDEyLjVMMTUgNy41IiBzdHJva2U9IiM2QjcyODAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=')] 
                           bg-no-repeat bg-[center_right_1rem]"
@@ -226,7 +226,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
             </div>
 
             <div className="group">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Description *
               </label>
               <textarea
@@ -236,13 +236,13 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 minLength={10}
                 maxLength={1000}
                 rows={4}
-                className="w-full px-4 py-3.5 bg-white 
-                          border border-gray-300 rounded-xl
-                          text-gray-900
-                          placeholder:text-gray-500
+                className="w-full px-4 py-3.5 bg-white dark:bg-gray-950 
+                          border border-gray-300 dark:border-gray-700 rounded-xl
+                          text-gray-900 dark:text-gray-100
+                          placeholder:text-gray-500 dark:placeholder:text-gray-400
                           focus:ring-2 focus:ring-blue-500/50 
                           focus:border-blue-500
-                          hover:border-gray-400
+                          hover:border-gray-400 dark:hover:border-gray-600
                           transition-all duration-200 resize-none min-h-[120px]"
                 placeholder="Please provide color, size, distinctive features, etc."
               />
@@ -250,7 +250,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="group">
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {locationLabel} {!isLost && '*'}
                 </label>
                 <input
@@ -259,20 +259,20 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                   id="location"
                   required={!isLost}
                   maxLength={200}
-                  className="w-full px-4 py-3 bg-white 
-                            border border-gray-300 rounded-xl
-                            text-gray-900
-                            placeholder:text-gray-500
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                            border border-gray-300 dark:border-gray-700 rounded-xl
+                            text-gray-900 dark:text-gray-100
+                            placeholder:text-gray-500 dark:placeholder:text-gray-400
                             focus:ring-2 focus:ring-blue-500/50 
                             focus:border-blue-500
-                            hover:border-gray-400
+                            hover:border-gray-400 dark:hover:border-gray-600
                             transition-all duration-200"
                   placeholder={isLost ? "e.g., Library, 2nd floor" : "e.g., Cafeteria"}
                 />
               </div>
 
               <div className="group">
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {dateLabel} *
                 </label>
                 <input
@@ -281,19 +281,19 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                   id="date"
                   required
                   max={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 bg-white 
-                            border border-gray-300 rounded-xl
-                            text-gray-900
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                            border border-gray-300 dark:border-gray-700 rounded-xl
+                            text-gray-900 dark:text-gray-100
                             focus:ring-2 focus:ring-blue-500/50 
                             focus:border-blue-500
-                            hover:border-gray-400
+                            hover:border-gray-400 dark:hover:border-gray-600
                             transition-all duration-200"
                 />
               </div>
             </div>
             
             <div className="group">
-              <label htmlFor="contactInfo" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="contactInfo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Contact Information *
               </label>
               <input
@@ -303,13 +303,13 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 required
                 minLength={3}
                 maxLength={200}
-                className="w-full px-4 py-3 bg-white 
-                          border border-gray-300 rounded-xl
-                          text-gray-900
-                          placeholder:text-gray-500
+                className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                          border border-gray-300 dark:border-gray-700 rounded-xl
+                          text-gray-900 dark:text-gray-100
+                          placeholder:text-gray-500 dark:placeholder:text-gray-400
                           focus:ring-2 focus:ring-blue-500/50 
                           focus:border-blue-500
-                          hover:border-gray-400
+                          hover:border-gray-400 dark:hover:border-gray-600
                           transition-all duration-200"
                 placeholder="Email or phone number"
               />
@@ -320,10 +320,10 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
             <Link
               href="/"
               className="flex-1 px-6 py-3.5 
-                        border-2 border-gray-300 
-                        text-gray-700 rounded-xl
-                        hover:bg-gray-100 
-                        hover:border-gray-400 
+                        border-2 border-gray-300 dark:border-gray-700 
+                        text-gray-700 dark:text-gray-200 rounded-xl
+                        hover:bg-gray-100 dark:hover:bg-gray-800 
+                        hover:border-gray-400 dark:hover:border-gray-600 
                         text-center transition-all duration-200 text-sm font-semibold
                         focus:outline-none focus:ring-2 focus:ring-gray-400/20"
             >
@@ -351,9 +351,9 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
         {/* Success Modal */}
         {showSuccessModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in duration-300">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in duration-300">
               <div className="text-center">
-                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
                   <svg
                     className="h-10 w-10 text-green-600"
                     fill="none"
@@ -368,19 +368,19 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                     />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   Successfully Submitted!
                 </h3>
-                <p className="text-gray-600 mb-1">
+                <p className="text-gray-600 dark:text-gray-400 mb-1">
                   Your {isLost ? 'lost' : 'found'} item report for
                 </p>
-                <p className="text-lg font-semibold text-gray-900 mb-4">
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                   "{submittedItemTitle}"
                 </p>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
                   has been submitted successfully. {isLost ? "We'll notify you if we find a match." : "We'll check for potential matches."}
                 </p>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                   You can also check your notifications for updates.
                 </p>
                 <button

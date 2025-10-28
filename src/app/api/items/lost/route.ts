@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { $Enums } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { lostItemSchema, imageUploadSchema } from '@/lib/validations';
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
           await tx.notification.create({
             data: {
               userId: validatedItem.userId,
-              type: 'ITEM_REPORTED' as any,
+              type: $Enums.NotificationType.ITEM_REPORTED,
               title: 'Lost Item Reported',
               message: `Your lost item "${validatedItem.title}" has been successfully reported. We'll notify you if we find a match.`,
               itemId: createdItem.id,
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
         await tx.notification.create({
           data: {
             userId: validatedItem.userId,
-            type: 'ITEM_REPORTED' as any,
+            type: $Enums.NotificationType.ITEM_REPORTED,
             title: 'Lost Item Reported',
             message: `Your lost item "${validatedItem.title}" has been successfully reported. We'll notify you if we find a match.`,
             itemId: createdItem.id,

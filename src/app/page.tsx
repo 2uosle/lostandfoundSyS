@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Gradient Orbs */}
@@ -26,11 +26,11 @@ export default function Home() {
             </h1>
             
             {/* Subtitle */}
-            <p className="text-xl sm:text-2xl md:text-3xl text-gray-600 mb-4 font-light">
+            <p className="text-xl sm:text-2xl md:text-3xl text-gray-600 dark:text-gray-300 mb-4 font-light">
               Reuniting people with their belongings
             </p>
             
-            <p className="text-base sm:text-lg text-gray-500 mb-16 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 mb-16 max-w-2xl mx-auto">
               Report lost items, browse found items, and use our intelligent matching system 
               to help recover what matters most.
             </p>
@@ -86,32 +86,32 @@ export default function Home() {
 
             {/* Features Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              <div className="bg-white/50 backdrop-blur-lg border border-gray-200 rounded-2xl p-6">
+              <div className="bg-white/50 dark:bg-white/5 backdrop-blur-lg border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
                 <div className="text-3xl mb-3">🤖</div>
-                <h4 className="font-semibold text-gray-900 mb-2">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Smart Matching
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   AI-powered algorithm matches lost and found items automatically
                 </p>
               </div>
               
-              <div className="bg-white/50 backdrop-blur-lg border border-gray-200 rounded-2xl p-6">
+              <div className="bg-white/50 dark:bg-white/5 backdrop-blur-lg border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
                 <div className="text-3xl mb-3">🔒</div>
-                <h4 className="font-semibold text-gray-900 mb-2">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Secure & Private
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Your information is protected and only shared when matched
                 </p>
               </div>
               
-              <div className="bg-white/50 backdrop-blur-lg border border-gray-200 rounded-2xl p-6">
+              <div className="bg-white/50 dark:bg-white/5 backdrop-blur-lg border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
                 <div className="text-3xl mb-3">⚡</div>
-                <h4 className="font-semibold text-gray-900 mb-2">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Fast Results
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Get notified instantly when potential matches are found
                 </p>
               </div>

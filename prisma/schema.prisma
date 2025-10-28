@@ -10,13 +10,13 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
+  id            String         @id @default(cuid())
+  email         String         @unique
   name          String?
-  password      String?   // Optional for OAuth users
-  role          UserRole  @default(STUDENT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  password      String? // Optional for OAuth users
+  role          UserRole       @default(STUDENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   lostItems     LostItem[]
   foundItems    FoundItem[]
   activityLogs  ActivityLog[]
@@ -29,21 +29,21 @@ enum UserRole {
 }
 
 model LostItem {
-  id          String    @id @default(cuid())
-  title       String
-  description String
-  category    String
-  location    String?
-  contactInfo String?
-  lostDate    DateTime
-  status      ItemStatus @default(PENDING)
-  imageUrl    String?
-  reportedBy  User?     @relation(fields: [userId], references: [id])
-  userId      String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  matchedWith FoundItem? @relation("ItemMatch", fields: [matchedItemId], references: [id])
-  matchedItemId String? @unique
+  id            String     @id @default(cuid())
+  title         String
+  description   String
+  category      String
+  location      String?
+  contactInfo   String?
+  lostDate      DateTime
+  status        ItemStatus @default(PENDING)
+  imageUrl      String?
+  reportedBy    User?      @relation(fields: [userId], references: [id])
+  userId        String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  matchedWith   FoundItem? @relation("ItemMatch", fields: [matchedItemId], references: [id])
+  matchedItemId String?    @unique
 
   @@index([category, status])
   @@index([status, createdAt])
@@ -51,7 +51,7 @@ model LostItem {
 }
 
 model FoundItem {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   description String
   category    String
@@ -60,11 +60,11 @@ model FoundItem {
   foundDate   DateTime
   status      ItemStatus @default(PENDING)
   imageUrl    String?
-  reportedBy  User?     @relation(fields: [userId], references: [id])
+  reportedBy  User?      @relation(fields: [userId], references: [id])
   userId      String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  matchedItem LostItem? @relation("ItemMatch")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  matchedItem LostItem?  @relation("ItemMatch")
 
   @@index([category, status])
   @@index([status, createdAt])
@@ -77,20 +77,20 @@ enum ItemStatus {
   CLAIMED
   ARCHIVED
   RESOLVED
-   DONATED
-   DISPOSED
+  DONATED
+  DISPOSED
 }
 
 model ActivityLog {
-  id          String       @id @default(cuid())
+  id          String      @id @default(cuid())
   action      AdminAction
-  itemType    String       // 'LOST' or 'FOUND'
+  itemType    String // 'LOST' or 'FOUND'
   itemId      String
-  itemTitle   String       // Store title for reference even if item is deleted
-  performedBy User         @relation(fields: [userId], references: [id])
+  itemTitle   String // Store title for reference even if item is deleted
+  performedBy User        @relation(fields: [userId], references: [id])
   userId      String
-  details     String?      // JSON string with additional info (matched item, reason, etc.)
-  createdAt   DateTime     @default(now())
+  details     String? // JSON string with additional info (matched item, reason, etc.)
+  createdAt   DateTime    @default(now())
 
   @@index([action, createdAt])
   @@index([itemType, itemId])
@@ -105,24 +105,24 @@ enum AdminAction {
   DELETE
   RESTORE
   RESOLVE
-   DONATE
-   DISPOSE
+  DONATE
+  DISPOSE
   HANDOFF_START
   HANDOFF_COMPLETE
   HANDOFF_RESET
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String           @id @default(cuid())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   type      NotificationType
   title     String
   message   String
-  itemId    String?  // Reference to the item (lost or found)
-  itemType  String?  // 'LOST' or 'FOUND'
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  itemId    String? // Reference to the item (lost or found)
+  itemType  String? // 'LOST' or 'FOUND'
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
 
   @@index([userId, read])
   @@index([createdAt])
@@ -136,26 +136,33 @@ enum NotificationType {
   MATCH_FOUND
 }
 
+enum HandoffStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  LOCKED
+}
+
 // Handoff session for 2-way mutual verification (owner and admin)
 // The finder has already given the item to admin, so only owner needs to verify
 model HandoffSession {
-  id                    String   @id @default(cuid())
-  lostItemId            String
-  foundItemId           String
-  ownerUserId           String   // Person who lost the item
-  finderUserId          String   // Person who found it (for reference only)
-  ownerCode             String   // Code shown only to owner
-  adminCode             String   // Code shown only to admin
+  id                 String        @id @default(cuid())
+  lostItemId         String
+  foundItemId        String
+  ownerUserId        String // Person who lost the item
+  finderUserId       String // Person who found it (for reference only)
+  ownerCode          String // Code shown only to owner
+  adminCode          String // Code shown only to admin
   // Mutual verification: both parties must verify each other
-  ownerVerifiedAdmin    Boolean  @default(false) // owner entered admin's code
-  adminVerifiedOwner    Boolean  @default(false) // admin entered owner's code
-  ownerAttempts         Int      @default(0)
-  adminAttempts         Int      @default(0)
-  expiresAt             DateTime
-  locked                Boolean  @default(false)
-  status                String   @default("ACTIVE") // ACTIVE | COMPLETED | EXPIRED | LOCKED
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  ownerVerifiedAdmin Boolean       @default(false) // owner entered admin's code
+  adminVerifiedOwner Boolean       @default(false) // admin entered owner's code
+  ownerAttempts      Int           @default(0)
+  adminAttempts      Int           @default(0)
+  expiresAt          DateTime
+  locked             Boolean       @default(false)
+  status             HandoffStatus @default(ACTIVE)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@index([lostItemId])
   @@index([foundItemId])

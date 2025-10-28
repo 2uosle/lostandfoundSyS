@@ -51,27 +51,27 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">👋</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Welcome Back
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Sign in to your account
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8">
           {/* Google Sign-In Button */}
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 px-6 py-3.5
-                     bg-white border-2 border-gray-300 rounded-xl
-                     text-gray-700 font-semibold
-                     hover:bg-gray-50 hover:border-gray-400
+                     bg-white dark:bg-gray-950 border-2 border-gray-300 dark:border-gray-700 rounded-xl
+                     text-gray-700 dark:text-gray-200 font-semibold
+                     hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-600
                      focus:outline-none focus:ring-2 focus:ring-blue-500/30
                      transition-all duration-200
                      disabled:opacity-50 disabled:cursor-not-allowed
@@ -89,17 +89,17 @@ function LoginContent() {
 
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500 font-medium">Or continue with email</span>
+              <span className="px-4 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 font-medium">Or continue with email</span>
             </div>
           </div>
 
           <AuthForm onSubmit={handle} />
           
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
               <Link 
                 href="/register" 
@@ -110,8 +110,8 @@ function LoginContent() {
             </p>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
               🎓 Institutional email (@neu.edu.ph) required for Google Sign-In
             </p>
           </div>

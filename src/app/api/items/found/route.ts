@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { $Enums } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { foundItemSchema, imageUploadSchema } from '@/lib/validations';
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
         await tx.notification.create({
           data: {
             userId: validatedItem.userId,
-            type: 'ITEM_REPORTED' as any,
+            type: $Enums.NotificationType.ITEM_REPORTED,
             title: 'Found Item Reported',
             message: `Found item "${validatedItem.title}" has been successfully reported. We'll check for potential matches.`,
             itemId: createdItem.id,

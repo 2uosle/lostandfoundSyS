@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { $Enums } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
@@ -31,12 +32,12 @@ export async function GET(_req: Request, context: RouteContext) {
       return errorResponse('Not a participant of this session', 403);
     }
 
-    const expired = isExpired(hs.expiresAt) || hs.status !== 'ACTIVE';
+  const expired = isExpired(hs.expiresAt) || hs.status !== 'ACTIVE';
 
     const payload: any = {
       id: hs.id,
       role,
-      status: expired ? (hs.status === 'ACTIVE' ? 'EXPIRED' : hs.status) : hs.status,
+  status: expired ? (hs.status === 'ACTIVE' ? 'EXPIRED' : hs.status) : hs.status,
       expiresAt: hs.expiresAt,
       locked: !!hs.locked,
       ownerVerifiedAdmin: !!hs.ownerVerifiedAdmin,
