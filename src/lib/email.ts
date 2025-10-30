@@ -215,7 +215,7 @@ export async function sendMatchNotification(data: MatchNotificationData) {
         
         <div class="footer">
           <p>
-            This is an automated notification from the ClaimNEULost & Found System.<br>
+            This is an automated notification from the ClaimNEU Lost and Found System.<br>
             If you did not report this item, please ignore this email.
           </p>
         </div>
@@ -247,7 +247,7 @@ Next Steps:
 3. Prepare to verify ownership
 
 ---
-This is an automated notification from the Lost & Found System.
+This is an automated notification from the ClaimNEU Lost and Found System.
 If you did not report this item, please ignore this email.
   `.trim();
 
