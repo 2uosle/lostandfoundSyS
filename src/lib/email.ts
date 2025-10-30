@@ -31,7 +31,8 @@ function getTransporter(): nodemailer.Transporter | null {
 }
 
 export async function sendEmail({ to, subject, html, text }: MailOptions): Promise<{ sent: boolean; info?: any; reason?: string }>{
-  const from = process.env.SMTP_FROM || 'no-reply@localhost';
+  const emailAddress = process.env.SMTP_FROM || 'no-reply@localhost';
+  const from = `ClaimNEU Lost and Found <${emailAddress}>`;
   const tx = getTransporter();
 
   if (!tx) {
