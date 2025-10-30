@@ -144,7 +144,7 @@ function DashboardContent() {
         const matched = lostItemsRef.current.filter(i => i.status === 'MATCHED' && i.matchedItemId);
         if (matched.length === 0) return;
         matched.forEach(item => loadHandoffSession(item.id));
-      }, 5000);
+      }, 15000); // 15 seconds instead of 5 for less frequent polling
     }
 
     function stopPolling() {

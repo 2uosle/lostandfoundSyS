@@ -59,10 +59,49 @@ export default function NotificationBell() {
 
   useEffect(() => {
     loadNotifications();
-    // Poll for new notifications every 10 seconds for real-time updates
-    const interval = setInterval(loadNotifications, 10000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    // Poll for new notifications every 30 seconds (reduced from 10s)
+    // Pause when dropdown is open or tab is hidden
+    let interval: NodeJS.Timeout | null = null;
+    
+    const startPolling = () => {
+      if (interval) return;
+      interval = setInterval(() => {
+        // Only poll if dropdown is closed and tab is visible
+        if (!showDropdown && !document.hidden) {
+          loadNotifications();
+        }
+      }, 30000); // 30 seconds instead of 10
+    };
+    
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+    
+    // Start polling immediately
+    startPolling();
+    
+    // Pause/resume polling based on tab visibility
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        startPolling();
+        // Reload notifications when tab becomes visible again
+        if (!showDropdown) loadNotifications();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [showDropdown]);
 
   const markAsRead = async (notificationId: string) => {
     try {
