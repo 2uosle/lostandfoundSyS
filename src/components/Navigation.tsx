@@ -40,20 +40,6 @@ export default function Navigation() {
             >
               Report Lost
             </Link>
-            
-            {/* Only admins can report found items */}
-            {isAdmin && (
-              <Link
-                href="/found"
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                  isActive('/found')
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                Report Found
-              </Link>
-            )}
 
             {session?.user && (
               <Link
@@ -168,20 +154,6 @@ export default function Navigation() {
           >
             Report Lost
           </Link>
-          
-          {/* Only admins can report found items */}
-          {isAdmin && (
-            <Link
-              href="/found"
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                isActive('/found')
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
-              }`}
-            >
-              Report Found
-            </Link>
-          )}
           
           {session?.user && (
             <Link
