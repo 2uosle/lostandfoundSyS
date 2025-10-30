@@ -4,9 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { foundItemSchema, imageUploadSchema } from '@/lib/validations';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
-import { saveValidatedImage } from '@/lib/image-validation';
 import logger, { logRequest, logError } from '@/lib/logger';
-import path from 'path';
 
 export async function POST(req: Request) {
   const startTime = Date.now();
@@ -50,30 +48,19 @@ export async function POST(req: Request) {
 
     // Validate image
     imageUploadSchema.parse({ image: body.image });
+    
+    // Validate the image format
+    const { validateBase64Image } = await import('@/lib/image-validation');
+    const validation = validateBase64Image(body.image);
+    if (!validation.valid) {
+      throw new Error('Invalid image format');
+    }
+    
+    // Store base64 directly (works on Vercel and locally)
+    const validatedImageUrl = body.image;
 
     // Use transaction to ensure atomicity
     const item = await prisma.$transaction(async (tx) => {
-      let imageUrl: string | null = null;
-      
-      // Handle image - on Vercel we can't save to filesystem, so store base64 directly
-      if (body.image) {
-        // Validate the image format
-        const validation = await import('@/lib/image-validation').then(m => m.validateBase64Image(body.image));
-        if (!validation.valid) {
-          throw new Error('Invalid image format');
-        }
-        
-        // In production (Vercel), store as base64. In development, try to save to disk
-        if (process.env.VERCEL) {
-          // On Vercel: Store base64 directly (temporary solution)
-          imageUrl = body.image;
-        } else {
-          // Local development: Save to disk
-          const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-          imageUrl = await saveValidatedImage(body.image, '', uploadsDir);
-        }
-      }
-      
       // Create the found item record
       const createdItem = await tx.foundItem.create({
         data: {
@@ -85,23 +72,21 @@ export async function POST(req: Request) {
           contactInfo: validatedItem.contactInfo,
           status: 'PENDING',
           userId: validatedItem.userId,
-          imageUrl: imageUrl,
+          imageUrl: validatedImageUrl,
         },
       });
 
       // Create notification for the admin
-      if (validatedItem.userId) {
-        await tx.notification.create({
-          data: {
-            userId: validatedItem.userId,
-            type: $Enums.NotificationType.ITEM_REPORTED,
-            title: 'Found Item Reported',
-            message: `Found item "${validatedItem.title}" has been successfully reported. We'll check for potential matches.`,
-            itemId: createdItem.id,
-            itemType: 'FOUND',
-          },
-        });
-      }
+      await tx.notification.create({
+        data: {
+          userId: validatedItem.userId!,
+          type: 'ITEM_REPORTED',
+          title: 'Found Item Reported',
+          message: `Found item "${validatedItem.title}" has been successfully reported. We'll check for potential matches.`,
+          itemId: createdItem.id,
+          itemType: 'FOUND',
+        },
+      });
       
       return createdItem;
     });

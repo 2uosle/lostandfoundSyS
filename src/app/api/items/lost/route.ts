@@ -4,9 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { lostItemSchema, imageUploadSchema } from '@/lib/validations';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
-import { saveValidatedImage } from '@/lib/image-validation';
 import logger, { logRequest, logError } from '@/lib/logger';
-import path from 'path';
 
 export async function POST(req: Request) {
   const startTime = Date.now();
@@ -44,33 +42,23 @@ export async function POST(req: Request) {
     });
 
     // Validate image if provided
+    let validatedImageUrl: string | null = null;
     if (body.image) {
       imageUploadSchema.parse({ image: body.image });
+      
+      // Validate the image format
+      const { validateBase64Image } = await import('@/lib/image-validation');
+      const validation = validateBase64Image(body.image);
+      if (!validation.valid) {
+        throw new Error('Invalid image format');
+      }
+      
+      // Store base64 directly (works on Vercel and locally)
+      validatedImageUrl = body.image;
     }
 
     // Use transaction to ensure atomicity
     const item = await prisma.$transaction(async (tx) => {
-      let imageUrl: string | null = null;
-      
-      // Handle image - on Vercel we can't save to filesystem, so store base64 directly
-      if (body.image) {
-        // Validate the image format
-        const validation = await import('@/lib/image-validation').then(m => m.validateBase64Image(body.image));
-        if (!validation.valid) {
-          throw new Error('Invalid image format');
-        }
-        
-        // In production (Vercel), store as base64. In development, try to save to disk
-        if (process.env.VERCEL) {
-          // On Vercel: Store base64 directly (temporary solution)
-          imageUrl = body.image;
-        } else {
-          // Local development: Save to disk
-          const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-          imageUrl = await saveValidatedImage(body.image, '', uploadsDir);
-        }
-      }
-      
       // Create the lost item record
       const createdItem = await tx.lostItem.create({
         data: {
@@ -82,23 +70,21 @@ export async function POST(req: Request) {
           contactInfo: validatedItem.contactInfo,
           status: 'PENDING',
           userId: validatedItem.userId,
-          imageUrl: imageUrl,
+          imageUrl: validatedImageUrl,
         },
       });
 
       // Create notification for the user
-      if (validatedItem.userId) {
-        await tx.notification.create({
-          data: {
-            userId: validatedItem.userId,
-            type: $Enums.NotificationType.ITEM_REPORTED,
-            title: 'Lost Item Reported',
-            message: `Your lost item "${validatedItem.title}" has been successfully reported. We'll notify you if we find a match.`,
-            itemId: createdItem.id,
-            itemType: 'LOST',
-          },
-        });
-      }
+      await tx.notification.create({
+        data: {
+          userId: validatedItem.userId!,
+          type: 'ITEM_REPORTED',
+          title: 'Lost Item Reported',
+          message: `Your lost item "${validatedItem.title}" has been successfully reported. We'll notify you if we find a match.`,
+          itemId: createdItem.id,
+          itemType: 'LOST',
+        },
+      });
       
       return createdItem;
     });
@@ -121,6 +107,12 @@ export async function POST(req: Request) {
     }, 201);
   } catch (error) {
     const duration = Date.now() - startTime;
+    console.error('Lost item creation error:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      name: error instanceof Error ? error.name : 'Unknown',
+    });
     logError(error as Error, { endpoint: '/api/items/lost', userId });
     logRequest('POST', '/api/items/lost', userId, duration, 500, (error as Error).message);
     return handleApiError(error);
