@@ -413,7 +413,12 @@ export default function AnalyticsPage() {
                   contentStyle={{ 
                     backgroundColor: '#1f2937', 
                     border: '1px solid #374151',
-                    borderRadius: '8px',
+                    borderRadius: '8px'
+                  }}
+                  itemStyle={{
+                    color: '#f3f4f6'
+                  }}
+                  labelStyle={{
                     color: '#f3f4f6'
                   }}
                 />
