@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma';
-import { Prisma, $Enums } from '@prisma/client';
+import { $Enums } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { adminActionSchema } from '@/lib/validations';
-import { sendEmail } from '@/lib/email';
+import { sendMatchNotification } from '@/lib/email';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
 import { emitHandoffUpdate } from '@/lib/handoff-events';
+import { calculateMatchScore } from '@/lib/matching';
 
 /**
  * Helper function to log admin activity
@@ -173,17 +174,52 @@ export async function POST(req: Request) {
         const [lostItem, foundItem] = await Promise.all([
           prisma.lostItem.findUnique({
             where: { id: itemId },
-            select: { title: true, category: true, userId: true },
+            select: { 
+              title: true, 
+              description: true,
+              category: true, 
+              userId: true,
+              location: true,
+              lostDate: true,
+            },
           }),
           prisma.foundItem.findUnique({
             where: { id: matchWithId },
-            select: { title: true, id: true, userId: true },
+            select: { 
+              title: true, 
+              description: true,
+              id: true, 
+              userId: true,
+              category: true,
+              location: true,
+              foundDate: true,
+            },
           }),
         ]);
 
         if (!lostItem || !foundItem) {
           return errorResponse('One or both items not found', 404);
         }
+
+        // Calculate match score for the email
+        const matchScore = calculateMatchScore(
+          {
+            id: itemId,
+            title: lostItem.title,
+            description: lostItem.description,
+            category: lostItem.category,
+            location: lostItem.location,
+            lostDate: lostItem.lostDate,
+          },
+          {
+            id: foundItem.id,
+            title: foundItem.title,
+            description: foundItem.description,
+            category: foundItem.category,
+            location: foundItem.location || '',
+            foundDate: foundItem.foundDate,
+          }
+        );
 
         // Link both items using relation
         await prisma.$transaction([
@@ -208,7 +244,7 @@ export async function POST(req: Request) {
             'LOST',
             itemId,
             lostItem.title,
-            { matchedWith: foundItem.id, matchedTitle: foundItem.title }
+            { matchedWith: foundItem.id, matchedTitle: foundItem.title, matchScore: Math.round(matchScore.score) }
           ),
           logActivity(
             session.user.id,
@@ -216,7 +252,7 @@ export async function POST(req: Request) {
             'FOUND',
             matchWithId!,
             foundItem.title,
-            { matchedWith: itemId, matchedTitle: lostItem.title }
+            { matchedWith: itemId, matchedTitle: lostItem.title, matchScore: Math.round(matchScore.score) }
           ),
         ]);
 
@@ -259,14 +295,27 @@ export async function POST(req: Request) {
           await Promise.all(notifications);
         }
 
-        // Send email to lost item owner (if available)
+        // Send enhanced email to lost item owner
         if (lostItem.userId) {
-          const user = await prisma.user.findUnique({ where: { id: lostItem.userId }, select: { email: true, name: true } });
+          const user = await prisma.user.findUnique({ 
+            where: { id: lostItem.userId }, 
+            select: { email: true, name: true } 
+          });
+          
           if (user?.email) {
-            const subject = 'Lost & Found: We found a match for your item';
-            const text = `Hi${user.name ? ' ' + user.name : ''},\n\nGood news! Your lost item "${lostItem.title}" has been matched with a found item "${foundItem.title}". Please sign in to your dashboard to review and proceed.\n\nThank you,\nLost & Found Team`;
-            const html = `<p>Hi${user.name ? ' ' + user.name : ''},</p><p><strong>Good news!</strong> Your lost item "${lostItem.title}" has been matched with a found item "${foundItem.title}".</p><p>Please <a href="${process.env.NEXTAUTH_URL || ''}/dashboard">sign in</a> to review and proceed.</p><p>Thank you,<br/>Lost & Found Team</p>`;
-            await sendEmail({ to: user.email, subject, text, html });
+            const dashboardUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`;
+            
+            // Send rich email notification
+            await sendMatchNotification({
+              userEmail: user.email,
+              userName: user.name || 'there',
+              lostItemTitle: lostItem.title,
+              lostItemDescription: lostItem.description,
+              foundItemTitle: foundItem.title,
+              foundItemDescription: foundItem.description,
+              matchScore: Math.round(matchScore.score),
+              dashboardUrl,
+            });
           }
         }
 

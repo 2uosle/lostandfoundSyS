@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { showToast } from '@/components/Toast';
@@ -15,7 +15,6 @@ export default function AdminHandoffConsole() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [info, setInfo] = useState<any | null>(null);
   const [ownerInput, setOwnerInput] = useState('');
-  const [finderInput, setFinderInput] = useState('');
   const [submitting, setSubmitting] = useState<'OWNER'|'FINDER'|null>(null);
 
   useEffect(() => {
@@ -25,7 +24,7 @@ export default function AdminHandoffConsole() {
     }
   }, [session, status, router]);
 
-  async function load(opts?: { initial?: boolean }) {
+  const load = useCallback(async (opts?: { initial?: boolean }) => {
     const showInitial = !!opts?.initial;
     if (showInitial) setInitialLoading(true);
     try {
@@ -38,11 +37,11 @@ export default function AdminHandoffConsole() {
     } finally {
       if (showInitial) setInitialLoading(false);
     }
-  }
+  }, [id]);
 
   useEffect(() => {
     if (session?.user && id) load({ initial: true });
-  }, [session, id]);
+  }, [session, id, load]);
 
   // Prefer SSE; fallback polling is no longer necessary for normal flow
   useEffect(() => {

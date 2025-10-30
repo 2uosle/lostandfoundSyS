@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { showToast } from '@/components/Toast';
+import Image from 'next/image';
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -57,28 +58,9 @@ function DashboardContent() {
     }
   }, [status, router]);
 
-  useEffect(() => {
-    if (session?.user) {
-      loadItems();
-    }
-  }, [session]);
+  
 
-  // Handle URL parameter to auto-open item modal
-  useEffect(() => {
-    const openItemId = searchParams.get('openItem');
-    if (openItemId && lostItems.length > 0) {
-      const item = lostItems.find(i => i.id === openItemId);
-      if (item) {
-        setSelectedItem(item);
-        // Load handoff session if item is MATCHED
-        if (item.status === 'MATCHED') {
-          loadHandoffSession(item.id);
-        }
-        // Clear the URL parameter
-        router.replace('/dashboard', { scroll: false });
-      }
-    }
-  }, [searchParams, lostItems, router]);
+  // Handle URL parameter to auto-open item modal (moved below after callbacks)
 
   // Auto-refresh handoff sessions with a stable interval, pause when tab is hidden
   const pollRef = useRef<number | null>(null);
@@ -88,39 +70,23 @@ function DashboardContent() {
     lostItemsRef.current = lostItems;
   }, [lostItems]);
 
-  useEffect(() => {
-    function startPolling() {
-      if (pollRef.current != null) return; // already polling
-      pollRef.current = window.setInterval(() => {
-        const matched = lostItemsRef.current.filter(i => i.status === 'MATCHED' && i.matchedItemId);
-        if (matched.length === 0) return;
-        matched.forEach(item => loadHandoffSession(item.id));
-      }, 5000); // poll every 5s to reduce churn
-    }
+  // Polling effect moved below after callbacks
 
-    function stopPolling() {
-      if (pollRef.current != null) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
+  const loadHandoffSession = useCallback(async (lostItemId: string) => {
+    try {
+      const res = await fetch(`/api/handoff/by-item/${lostItemId}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setHandoffSessions(prev => ({ ...prev, [lostItemId]: data.data }));
+      } else {
+        // No session for this item yet; ignore
       }
+    } catch (error) {
+      console.error('Error loading handoff session:', error);
     }
-
-    // Start immediately if page visible
-    if (!document.hidden) startPolling();
-
-    const onVisibility = () => {
-      if (document.hidden) stopPolling();
-      else startPolling();
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility);
-      stopPolling();
-    };
   }, []);
 
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     if (!loadedOnceRef.current) setLoading(true);
     try {
        const lostRes = await fetch('/api/items/lost');
@@ -145,21 +111,61 @@ function DashboardContent() {
         loadedOnceRef.current = true;
       }
     }
-  };
+  }, [loadHandoffSession]);
 
-  const loadHandoffSession = async (lostItemId: string) => {
-    try {
-      const res = await fetch(`/api/handoff/by-item/${lostItemId}`);
-      const data = await res.json();
-      if (data.success && data.data) {
-        setHandoffSessions(prev => ({ ...prev, [lostItemId]: data.data }));
-      } else {
-        // No session for this item yet; ignore
-      }
-    } catch (error) {
-      console.error('Error loading handoff session:', error);
+  // Trigger initial load when session is available
+  useEffect(() => {
+    if (session?.user) {
+      loadItems();
     }
-  };
+  }, [session, loadItems]);
+
+  // Handle URL parameter to auto-open item modal (now after callbacks)
+  useEffect(() => {
+    const openItemId = searchParams.get('openItem');
+    if (openItemId && lostItems.length > 0) {
+      const item = lostItems.find(i => i.id === openItemId);
+      if (item) {
+        setSelectedItem(item);
+        if (item.status === 'MATCHED') {
+          loadHandoffSession(item.id);
+        }
+        router.replace('/dashboard', { scroll: false });
+      }
+    }
+  }, [searchParams, lostItems, router, loadHandoffSession]);
+
+  // Auto-refresh handoff sessions polling (now after callbacks)
+  useEffect(() => {
+    function startPolling() {
+      if (pollRef.current != null) return;
+      pollRef.current = window.setInterval(() => {
+        const matched = lostItemsRef.current.filter(i => i.status === 'MATCHED' && i.matchedItemId);
+        if (matched.length === 0) return;
+        matched.forEach(item => loadHandoffSession(item.id));
+      }, 5000);
+    }
+
+    function stopPolling() {
+      if (pollRef.current != null) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    }
+
+    if (!document.hidden) startPolling();
+
+    const onVisibility = () => {
+      if (document.hidden) stopPolling();
+      else startPolling();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      stopPolling();
+    };
+  }, [loadHandoffSession]);
 
   const handleVerifyHandoff = async (sessionId: string, code: string) => {
     if (!code || code.length !== 6) return;
@@ -239,17 +245,20 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Animated background orb */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400/10 dark:bg-blue-500/5 rounded-full blur-3xl animate-float"></div>
+      
+      <div className="max-w-6xl mx-auto relative z-10">
+        <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Dashboard</h1>
            <p className="text-gray-600 dark:text-gray-400 mt-2">View and manage your lost item reports</p>
         </div>
 
         {/* Items Grid */}
          {lostItems.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-12 text-center">
-            <div className="text-6xl mb-4">📦</div>
+          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 p-12 text-center animate-in fade-in zoom-in-95 duration-700 delay-300">
+            <div className="text-6xl mb-4 animate-bounce">📦</div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                No lost items yet
             </h3>
@@ -258,26 +267,32 @@ function DashboardContent() {
             </p>
             <Link
                href="/lost"
-               className="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition-all shadow-lg"
+               className="inline-block px-6 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 active:scale-95"
             >
                Report Lost Item
             </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {lostItems.map((item) => (
+             {lostItems.map((item, index) => (
               <div
                 key={item.id}
                 data-item-id={item.id}
-                className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
+                className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/20 transition-all duration-300 overflow-hidden cursor-pointer hover:scale-[1.02] hover:-translate-y-1 group animate-in fade-in slide-in-from-bottom-4 duration-700"
+                style={{ animationDelay: `${Math.min(index * 100, 600)}ms` }}
                 onClick={() => setSelectedItem(item)}
               >
                 {item.imageUrl && (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.title}
-                    className="w-full h-48 object-cover"
-                  />
+                  <div className="relative w-full h-48 overflow-hidden">
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.title}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
                 )}
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
@@ -493,13 +508,14 @@ function DashboardContent() {
 
       {/* Item Details Modal */}
       {selectedItem && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4 z-50" onClick={() => setSelectedItem(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 z-50 animate-in fade-in duration-300" onClick={() => setSelectedItem(null)}>
+          <div className="bg-white dark:bg-gray-900 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900 z-10">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Item Details</h2>
               <button
                 onClick={() => setSelectedItem(null)}
-                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+                aria-label="Close modal"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -508,11 +524,15 @@ function DashboardContent() {
             </div>
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
               {selectedItem.imageUrl && (
-                <img
-                  src={selectedItem.imageUrl}
-                  alt={selectedItem.title}
-                  className="w-full h-64 object-cover rounded-lg mb-6"
-                />
+                <div className="relative w-full h-64 rounded-lg mb-6 overflow-hidden">
+                  <Image
+                    src={selectedItem.imageUrl}
+                    alt={selectedItem.title}
+                    fill
+                    sizes="(min-width: 1024px) 800px, 100vw"
+                    className="object-cover"
+                  />
+                </div>
               )}
               
               <div className="mb-6">
@@ -562,8 +582,13 @@ function DashboardContent() {
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Contact Info</label>
-                    <p className="text-gray-900 dark:text-gray-100">{selectedItem.contactInfo}</p>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Reported by</label>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">{selectedItem.contactInfo}</p>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Reported On</label>
@@ -643,21 +668,21 @@ function DashboardContent() {
                 )}
               </div>
             </div>
-            <div className="p-6 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-gray-900 shadow-lg">
               {(selectedItem.status === 'MATCHED' || selectedItem.status === 'CLAIMED') && (
                 <button
                   onClick={() => {
                     setSelectedItem(null);
                     handleResolve(selectedItem.id);
                   }}
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition-all shadow-md hover:shadow-lg"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 active:scale-95"
                 >
                   Mark as Resolved
                 </button>
               )}
               <button
                 onClick={() => setSelectedItem(null)}
-                className="px-6 py-2 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
+                className="px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all duration-300 font-medium hover:scale-105 active:scale-95"
               >
                 Close
               </button>

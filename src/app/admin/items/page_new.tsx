@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { showToast } from '@/components/Toast';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 type Item = {
   id: string;
@@ -62,7 +63,7 @@ export default function AdminItemsPage() {
       } else {
         showToast(data.error || 'Failed to load items', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to load items', 'error');
     } finally {
       setLoading(false);
@@ -86,7 +87,7 @@ export default function AdminItemsPage() {
       } else {
         showToast(data.error || 'Failed to delete item', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to delete item', 'error');
     }
   }
@@ -111,7 +112,7 @@ export default function AdminItemsPage() {
       } else {
         showToast(data.error || 'Action failed', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('Action failed', 'error');
     }
   }
@@ -136,7 +137,7 @@ export default function AdminItemsPage() {
         showToast(data.error || 'Failed to find matches', 'error');
         setMatchingFor(null);
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to find matches', 'error');
       setMatchingFor(null);
     }
@@ -235,11 +236,15 @@ export default function AdminItemsPage() {
               <div key={item.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
                 <div className="flex gap-6">
                   {item.imageUrl && (
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
-                    />
+                    <div className="relative w-32 h-32 flex-shrink-0">
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        fill
+                        sizes="128px"
+                        className="object-cover rounded-lg"
+                      />
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-3">
@@ -337,11 +342,15 @@ export default function AdminItemsPage() {
                       <div key={candidate.item.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                         <div className="flex gap-4">
                           {candidate.item.imageUrl && (
-                            <img
-                              src={candidate.item.imageUrl}
-                              alt={candidate.item.title}
-                              className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
-                            />
+                            <div className="relative w-24 h-24 flex-shrink-0">
+                              <Image
+                                src={candidate.item.imageUrl}
+                                alt={candidate.item.title}
+                                fill
+                                sizes="96px"
+                                className="object-cover rounded-lg"
+                              />
+                            </div>
                           )}
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">
@@ -428,11 +437,15 @@ export default function AdminItemsPage() {
                       <h3 className="text-xl font-bold text-blue-600">Lost Item</h3>
                     </div>
                     {compareView.lost.imageUrl && (
-                      <img
-                        src={compareView.lost.imageUrl}
-                        alt={compareView.lost.title}
-                        className="w-full h-48 object-cover rounded-lg mb-4"
-                      />
+                      <div className="relative w-full h-48 rounded-lg mb-4 overflow-hidden">
+                        <Image
+                          src={compareView.lost.imageUrl}
+                          alt={compareView.lost.title}
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-3">
                       <div>
@@ -469,11 +482,15 @@ export default function AdminItemsPage() {
                       <h3 className="text-xl font-bold text-green-600">Found Item</h3>
                     </div>
                     {compareView.found.item.imageUrl && (
-                      <img
-                        src={compareView.found.item.imageUrl}
-                        alt={compareView.found.item.title}
-                        className="w-full h-48 object-cover rounded-lg mb-4"
-                      />
+                      <div className="relative w-full h-48 rounded-lg mb-4 overflow-hidden">
+                        <Image
+                          src={compareView.found.item.imageUrl}
+                          alt={compareView.found.item.title}
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-3">
                       <div>

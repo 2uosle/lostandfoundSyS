@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { showToast } from '@/components/Toast';
 import Link from 'next/link';
+import Image from 'next/image';
 
 type ActivityLog = {
   id: string;
@@ -59,7 +60,7 @@ export default function AdminHistoryPage() {
       } else {
         showToast(data.error || 'Failed to load history', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to load history', 'error');
     } finally {
       setLoading(false);
@@ -199,7 +200,7 @@ export default function AdminHistoryPage() {
       };
 
       setViewingMatch({ lost: lostDetails, found: foundDetails });
-    } catch (error) {
+    } catch {
       showToast('Failed to load item details', 'error');
     } finally {
       setLoadingMatch(false);
@@ -217,12 +218,12 @@ export default function AdminHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Back Button */}
         <Link 
           href="/admin/dashboard"
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mb-6 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -232,29 +233,29 @@ export default function AdminHistoryPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Activity History</h1>
-          <p className="text-gray-600 mt-2">Track all admin actions and changes to items</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Activity History</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Track all admin actions and changes to items</p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-6 border border-gray-200">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm mb-6 border border-gray-200 dark:border-gray-800">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by item title or admin..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Action</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Action</label>
               <select
                 value={filterAction}
                 onChange={(e) => setFilterAction(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Actions</option>
                 <option value="MATCH">Match</option>
@@ -266,11 +267,11 @@ export default function AdminHistoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Item Type</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Item Type</label>
               <select
                 value={filterItemType}
                 onChange={(e) => setFilterItemType(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Types</option>
                 <option value="LOST">Lost Items</option>
@@ -285,9 +286,9 @@ export default function AdminHistoryPage() {
           {['MATCH', 'CLAIM', 'ARCHIVE', 'DELETE', 'RESTORE', 'RESOLVE'].map(action => {
             const count = groupedLogs.filter(log => log.action === action).length;
             return (
-              <div key={action} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                <div className="text-2xl font-bold text-gray-900">{count}</div>
-                <div className="text-xs text-gray-600 capitalize">{action.toLowerCase()}</div>
+              <div key={action} className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800">
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{count}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400 capitalize">{action.toLowerCase()}</div>
               </div>
             );
           })}
@@ -297,45 +298,45 @@ export default function AdminHistoryPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading history...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading history...</p>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-12 text-center">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm p-12 text-center">
             <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No activity found</h3>
-            <p className="text-gray-600">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No activity found</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               {searchTerm || filterAction !== 'all' || filterItemType !== 'all'
                 ? 'Try adjusting your filters'
                 : 'No admin actions have been logged yet'}
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Date & Time
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Action
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Item
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Performed By
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Details
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                   {filteredLogs.map((log) => {
                     const details = parseDetails(log.details);
                     const hasMatch = details && details.matchedWith;
@@ -344,27 +345,27 @@ export default function AdminHistoryPage() {
                     return (
                       <tr 
                         key={log.id} 
-                        className={`hover:bg-gray-50 ${hasMatch && isMatchAction ? 'cursor-pointer' : ''}`}
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${hasMatch && isMatchAction ? 'cursor-pointer' : ''}`}
                         onClick={() => {
                           if (hasMatch && isMatchAction) {
                             loadMatchedItems(log);
                           }
                         }}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                           {format(new Date(log.createdAt), 'MMM dd, yyyy HH:mm')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {getActionBadge(log.action)}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                           {hasMatch && isMatchAction ? (
                             <div>
                               <div className="font-medium flex items-center gap-2 mb-1">
                                 📦 Matched Pair
-                                <span className="text-xs text-blue-600">👁️ Click to view</span>
+                                <span className="text-xs text-blue-600 dark:text-blue-400">👁️ Click to view</span>
                               </div>
-                              <div className="text-xs text-gray-600 space-y-0.5">
+                              <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
                                 <div>📢 Lost: <span className="font-medium">{log.itemType === 'LOST' ? log.itemTitle : details.matchedTitle}</span></div>
                                 <div>✨ Found: <span className="font-medium">{log.itemType === 'FOUND' ? log.itemTitle : details.matchedTitle}</span></div>
                               </div>
@@ -372,7 +373,7 @@ export default function AdminHistoryPage() {
                           ) : (
                             <div>
                               <div className="font-medium">{log.itemTitle}</div>
-                              <div className="text-xs text-gray-500">ID: {log.itemId.slice(0, 8)}...</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">ID: {log.itemId.slice(0, 8)}...</div>
                             </div>
                           )}
                         </td>
@@ -391,11 +392,11 @@ export default function AdminHistoryPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                           <div className="font-medium">{log.performedBy.name || 'Admin'}</div>
-                          <div className="text-xs text-gray-500">{log.performedBy.email}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{log.performedBy.email}</div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                           {details ? (
                             <div className="space-y-1">
                               {details.matchedWith && (
@@ -411,7 +412,7 @@ export default function AdminHistoryPage() {
                               )}
                             </div>
                           ) : (
-                            <span className="text-gray-400">-</span>
+                            <span className="text-gray-400 dark:text-gray-500">-</span>
                           )}
                         </td>
                       </tr>
@@ -426,16 +427,16 @@ export default function AdminHistoryPage() {
         {/* Matched Items Modal */}
         {viewingMatch && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4 z-50">
-            <div className="bg-white border border-gray-200 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-gray-200">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Matched Items - Side by Side</h2>
-                    <p className="text-gray-600 mt-1">View the matched lost and found items</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Matched Items - Side by Side</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">View the matched lost and found items</p>
                   </div>
                   <button
                     onClick={() => setViewingMatch(null)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -446,7 +447,7 @@ export default function AdminHistoryPage() {
               <div className="p-6 overflow-y-auto flex-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Lost Item */}
-                  <div className="border-2 border-blue-500 rounded-lg p-6">
+                  <div className="border-2 border-blue-500 dark:border-blue-600 rounded-lg p-6 bg-white dark:bg-gray-800">
                     <div className="flex items-center mb-4">
                       <span className="text-2xl mr-2">📢</span>
                       <h3 className="text-xl font-bold text-blue-600">Lost Item</h3>
@@ -459,45 +460,49 @@ export default function AdminHistoryPage() {
                       </span>
                     </div>
                     {viewingMatch.lost.imageUrl && (
-                      <img
-                        src={viewingMatch.lost.imageUrl}
-                        alt={viewingMatch.lost.title}
-                        className="w-full h-48 object-cover rounded-lg mb-4"
-                      />
+                      <div className="relative w-full h-48 rounded-lg mb-4 overflow-hidden">
+                        <Image
+                          src={viewingMatch.lost.imageUrl}
+                          alt={viewingMatch.lost.title}
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-3">
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Title:</label>
-                        <p className="text-gray-900">{viewingMatch.lost.title}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Title:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{viewingMatch.lost.title}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Description:</label>
-                        <p className="text-gray-900">{viewingMatch.lost.description}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Description:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{viewingMatch.lost.description}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Category:</label>
-                        <p className="text-gray-900 capitalize">{viewingMatch.lost.category}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Category:</label>
+                        <p className="text-gray-900 dark:text-gray-100 capitalize">{viewingMatch.lost.category}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Location:</label>
-                        <p className="text-gray-900">{viewingMatch.lost.location || 'N/A'}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Location:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{viewingMatch.lost.location || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Date Lost:</label>
-                        <p className="text-gray-900">{format(new Date(viewingMatch.lost.date), 'MMM dd, yyyy')}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Date Lost:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{format(new Date(viewingMatch.lost.date), 'MMM dd, yyyy')}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Contact:</label>
-                        <p className="text-gray-900">{viewingMatch.lost.contactInfo}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Contact:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{viewingMatch.lost.contactInfo}</p>
                       </div>
                       {viewingMatch.lost.reportedBy && (
-                        <div className="pt-3 mt-3 border-t border-blue-200">
-                          <label className="text-sm font-semibold text-gray-700">Reported By:</label>
-                          <p className="text-gray-900">
+                        <div className="pt-3 mt-3 border-t border-blue-200 dark:border-blue-800">
+                          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Reported By:</label>
+                          <p className="text-gray-900 dark:text-gray-100">
                             {viewingMatch.lost.reportedBy.name || 'Anonymous'}
                           </p>
                           {viewingMatch.lost.reportedBy.email && (
-                            <p className="text-sm text-gray-600">{viewingMatch.lost.reportedBy.email}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{viewingMatch.lost.reportedBy.email}</p>
                           )}
                         </div>
                       )}
@@ -505,7 +510,7 @@ export default function AdminHistoryPage() {
                   </div>
 
                   {/* Found Item */}
-                  <div className="border-2 border-green-500 rounded-lg p-6">
+                  <div className="border-2 border-green-500 dark:border-green-600 rounded-lg p-6 bg-white dark:bg-gray-800">
                     <div className="flex items-center mb-4">
                       <span className="text-2xl mr-2">✨</span>
                       <h3 className="text-xl font-bold text-green-600">Found Item</h3>
@@ -518,45 +523,49 @@ export default function AdminHistoryPage() {
                       </span>
                     </div>
                     {viewingMatch.found.imageUrl && (
-                      <img
-                        src={viewingMatch.found.imageUrl}
-                        alt={viewingMatch.found.title}
-                        className="w-full h-48 object-cover rounded-lg mb-4"
-                      />
+                      <div className="relative w-full h-48 rounded-lg mb-4 overflow-hidden">
+                        <Image
+                          src={viewingMatch.found.imageUrl}
+                          alt={viewingMatch.found.title}
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-3">
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Title:</label>
-                        <p className="text-gray-900">{viewingMatch.found.title}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Title:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{viewingMatch.found.title}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Description:</label>
-                        <p className="text-gray-900">{viewingMatch.found.description}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Description:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{viewingMatch.found.description}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Category:</label>
-                        <p className="text-gray-900 capitalize">{viewingMatch.found.category}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Category:</label>
+                        <p className="text-gray-900 dark:text-gray-100 capitalize">{viewingMatch.found.category}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Location:</label>
-                        <p className="text-gray-900">{viewingMatch.found.location || 'N/A'}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Location:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{viewingMatch.found.location || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Date Found:</label>
-                        <p className="text-gray-900">{format(new Date(viewingMatch.found.date), 'MMM dd, yyyy')}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Date Found:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{format(new Date(viewingMatch.found.date), 'MMM dd, yyyy')}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Contact:</label>
-                        <p className="text-gray-900">{viewingMatch.found.contactInfo}</p>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Contact:</label>
+                        <p className="text-gray-900 dark:text-gray-100">{viewingMatch.found.contactInfo}</p>
                       </div>
                       {viewingMatch.found.reportedBy && (
-                        <div className="pt-3 mt-3 border-t border-green-200">
-                          <label className="text-sm font-semibold text-gray-700">Reported By:</label>
-                          <p className="text-gray-900">
+                        <div className="pt-3 mt-3 border-t border-green-200 dark:border-green-800">
+                          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Reported By:</label>
+                          <p className="text-gray-900 dark:text-gray-100">
                             {viewingMatch.found.reportedBy.name || 'Anonymous'}
                           </p>
                           {viewingMatch.found.reportedBy.email && (
-                            <p className="text-sm text-gray-600">{viewingMatch.found.reportedBy.email}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{viewingMatch.found.reportedBy.email}</p>
                           )}
                         </div>
                       )}
@@ -564,10 +573,10 @@ export default function AdminHistoryPage() {
                   </div>
                 </div>
               </div>
-              <div className="p-6 border-t border-gray-200">
+              <div className="p-6 border-t border-gray-200 dark:border-gray-800">
                 <button
                   onClick={() => setViewingMatch(null)}
-                  className="w-full px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  className="w-full px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
                 >
                   Close
                 </button>
@@ -579,9 +588,9 @@ export default function AdminHistoryPage() {
         {/* Loading Overlay */}
         {loadingMatch && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
               <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-900 font-medium">Loading match details...</p>
+              <p className="text-gray-900 dark:text-gray-100 font-medium">Loading match details...</p>
             </div>
           </div>
         )}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { showToast } from './Toast';
 
 type ItemReportFormProps = {
@@ -10,12 +11,34 @@ type ItemReportFormProps = {
   onSuccess?: () => void;
 };
 
+type FormData = {
+  title: string;
+  description: string;
+  location: string;
+  date: string;
+  category: string;
+  contactInfo: string;
+  image: string | null;
+  imageFile: File | null;
+};
+
 export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submittedItemTitle, setSubmittedItemTitle] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [formData, setFormData] = useState<FormData | null>(null);
+  const [userEmail, setUserEmail] = useState('');
+
+  // Automatically populate user's email from session
+  useEffect(() => {
+    if (session?.user?.email) {
+      setUserEmail(session.user.email);
+    }
+  }, [session]);
 
   const isLost = type === 'lost';
   const title = isLost ? 'Report Lost Item' : 'Report Found Item';
@@ -29,31 +52,28 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitting(true);
     setError('');
 
-    const formData = new FormData(e.currentTarget);
+    const formElement = e.currentTarget;
+    const formDataObj = new FormData(formElement);
     
     // Handle file input
-    const file = formData.get('image') as File | null;
+    const file = formDataObj.get('image') as File | null;
     let imageBase64: string | null = null;
     
     // For found items, image is required
     if (!isLost && (!file || file.size === 0)) {
       setError('Photo is required for found items');
-      setSubmitting(false);
       return;
     }
     
     if (file && file.size > 0) {
       if (!['image/jpeg', 'image/png'].includes(file.type)) {
         setError('Only JPG/PNG images are allowed');
-        setSubmitting(false);
         return;
       }
       if (file.size > 3 * 1024 * 1024) {
         setError('Image must be under 3MB');
-        setSubmitting(false);
         return;
       }
       
@@ -63,19 +83,40 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
         imageBase64 = `data:${file.type};base64,${b64}`;
       } catch (err) {
         setError('Failed to process image');
-        setSubmitting(false);
         return;
       }
     }
 
-    const data = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      location: formData.get('location'),
-      date: formData.get('date'),
-      category: formData.get('category'),
-      contactInfo: formData.get('contactInfo'),
+    // Store form data and show confirmation
+    const data: FormData = {
+      title: formDataObj.get('title') as string,
+      description: formDataObj.get('description') as string,
+      location: formDataObj.get('location') as string,
+      date: formDataObj.get('date') as string,
+      category: formDataObj.get('category') as string,
+      contactInfo: formDataObj.get('contactInfo') as string,
       image: imageBase64,
+      imageFile: file && file.size > 0 ? file : null,
+    };
+
+    setFormData(data);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirm = async () => {
+    if (!formData) return;
+
+    setSubmitting(true);
+    setError('');
+
+    const data = {
+      title: formData.title,
+      description: formData.description,
+      location: formData.location,
+      date: formData.date,
+      category: formData.category,
+      contactInfo: formData.contactInfo,
+      image: formData.image,
     };
 
     try {
@@ -95,12 +136,13 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
         } else {
           setError(result?.error || 'Failed to submit report');
         }
+        setShowConfirmation(false);
         return;
       }
 
       // Success
-      const itemTitle = (formData.get('title') as string) || 'Item';
-      setSubmittedItemTitle(itemTitle);
+      setSubmittedItemTitle(formData.title);
+      setShowConfirmation(false);
       setShowSuccessModal(true);
       showToast(
         isLost 
@@ -115,9 +157,14 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
     } catch (error) {
       console.error('Error:', error);
       setError(error instanceof Error ? error.message : 'Failed to submit report');
+      setShowConfirmation(false);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEditForm = () => {
+    setShowConfirmation(false);
   };
 
   const handleCloseModal = () => {
@@ -296,23 +343,32 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
               <label htmlFor="contactInfo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Contact Information *
               </label>
-              <input
-                type="text"
-                name="contactInfo"
-                id="contactInfo"
-                required
-                minLength={3}
-                maxLength={200}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-950 
-                          border border-gray-300 dark:border-gray-700 rounded-xl
-                          text-gray-900 dark:text-gray-100
-                          placeholder:text-gray-500 dark:placeholder:text-gray-400
-                          focus:ring-2 focus:ring-blue-500/50 
-                          focus:border-blue-500
-                          hover:border-gray-400 dark:hover:border-gray-600
-                          transition-all duration-200"
-                placeholder="Email or phone number"
-              />
+              <div className="relative">
+                <input
+                  type="email"
+                  name="contactInfo"
+                  id="contactInfo"
+                  required
+                  value={userEmail}
+                  readOnly
+                  className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 
+                            border border-gray-300 dark:border-gray-700 rounded-xl
+                            text-gray-900 dark:text-gray-100
+                            cursor-not-allowed
+                            focus:ring-2 focus:ring-blue-500/50 
+                            focus:border-blue-500
+                            transition-all duration-200"
+                  placeholder="Your institutional email"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                📧 Your institutional email will be automatically recorded
+              </p>
             </div>
           </div>
 
@@ -347,6 +403,194 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
             </button>
           </div>
         </form>
+
+        {/* Confirmation Modal */}
+        {showConfirmation && formData && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto 
+                          animate-in slide-in-from-bottom-4 zoom-in-95 duration-500">
+              {/* Header */}
+              <div className={`px-8 py-6 border-b border-gray-200 dark:border-gray-800 
+                            ${isLost ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20' 
+                                     : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 rounded-xl ${isLost ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-green-100 dark:bg-green-900/40'}`}>
+                    <svg className={`w-6 h-6 ${isLost ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`} 
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      Confirm Your Report
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Please review your information before submitting
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="px-8 py-6 space-y-6">
+                {/* Image Preview */}
+                {formData.image && (
+                  <div className="animate-in slide-in-from-left duration-500 delay-100">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                      📸 Photo Preview
+                    </label>
+                    <div className="relative rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700
+                                  shadow-lg hover:shadow-xl transition-shadow duration-300">
+                      <img 
+                        src={formData.image} 
+                        alt="Preview" 
+                        className="w-full h-64 object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Item Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="animate-in slide-in-from-left duration-500 delay-150">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      📝 Item Name
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">{formData.title}</p>
+                    </div>
+                  </div>
+
+                  <div className="animate-in slide-in-from-right duration-500 delay-150">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      🏷️ Category
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                      <p className="text-gray-900 dark:text-gray-100 font-medium capitalize">{formData.category}</p>
+                    </div>
+                  </div>
+
+                  <div className="animate-in slide-in-from-left duration-500 delay-200">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      📍 {locationLabel}
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">{formData.location || 'Not specified'}</p>
+                    </div>
+                  </div>
+
+                  <div className="animate-in slide-in-from-right duration-500 delay-200">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      📅 {dateLabel}
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">
+                        {new Date(formData.date).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="animate-in slide-in-from-bottom duration-500 delay-250">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    📄 Description
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{formData.description}</p>
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="animate-in slide-in-from-bottom duration-500 delay-300">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    � Reported by
+                  </label>
+                  <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                    <p className="text-blue-900 dark:text-blue-100 font-semibold">{formData.contactInfo}</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Institutional Email (Auto-recorded)</p>
+                  </div>
+                </div>
+
+                {/* Info Banner */}
+                <div className={`p-4 rounded-xl border-2 animate-in slide-in-from-bottom duration-500 delay-350
+                              ${isLost 
+                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
+                                : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'}`}>
+                  <div className="flex gap-3">
+                    <svg className={`w-5 h-5 mt-0.5 flex-shrink-0 ${isLost ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`} 
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className={`text-sm ${isLost ? 'text-blue-800 dark:text-blue-200' : 'text-green-800 dark:text-green-200'}`}>
+                      {isLost 
+                        ? "Once submitted, we'll search for matching found items and notify you if there's a potential match."
+                        : "Once submitted, we'll check if this matches any lost item reports and notify the owner."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="px-8 py-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800 
+                            flex gap-3 animate-in slide-in-from-bottom duration-500 delay-400">
+                <button
+                  onClick={handleEditForm}
+                  disabled={submitting}
+                  className="flex-1 px-6 py-3.5 
+                            border-2 border-gray-300 dark:border-gray-600 
+                            text-gray-700 dark:text-gray-200 rounded-xl
+                            hover:bg-gray-100 dark:hover:bg-gray-700 
+                            hover:border-gray-400 dark:hover:border-gray-500 
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            transition-all duration-200 text-sm font-semibold
+                            focus:outline-none focus:ring-2 focus:ring-gray-400/20
+                            active:scale-[0.98]"
+                >
+                  ← Edit Form
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  disabled={submitting}
+                  className={`flex-1 px-6 py-3.5 text-white rounded-xl
+                            ${isLost 
+                              ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800' 
+                              : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                            }
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            transition-all duration-200 text-sm font-semibold
+                            shadow-lg hover:shadow-xl
+                            focus:outline-none focus:ring-2 focus:ring-blue-500/30
+                            active:scale-[0.98] disabled:active:scale-100
+                            flex items-center justify-center gap-2`}
+                >
+                  {submitting ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Confirm & Submit
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Success Modal */}
         {showSuccessModal && (

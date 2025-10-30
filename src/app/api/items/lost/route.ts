@@ -17,6 +17,21 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     userId = session?.user?.id;
 
+    // Check if user is authenticated
+    if (!session?.user?.id) {
+      return errorResponse('Unauthorized - Please login to report items', 401);
+    }
+
+    // Verify user exists in database
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return errorResponse('User not found - Please re-login', 404);
+    }
+
     // Validate item data
     const validatedItem = lostItemSchema.parse({
       title: body.title,
@@ -25,7 +40,7 @@ export async function POST(req: Request) {
       lostDate: body.date,
       category: body.category,
       contactInfo: body.contactInfo,
-      userId,
+      userId: session.user.id,
     });
 
     // Validate image if provided

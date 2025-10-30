@@ -45,16 +45,19 @@ export default async function AdminDashboard() {
             href="/admin/history"
             className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-800 border-l-4 border-l-purple-600"
           >
-            <div className="text-4xl mb-3">📊</div>
+              <div className="text-4xl mb-3">📜</div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Activity History</h2>
             <p className="text-gray-600 dark:text-gray-400">View all admin actions and item changes</p>
           </Link>
 
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 border-l-4 border-l-gray-300 opacity-60">
-            <div className="text-4xl mb-3">📈</div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Statistics</h2>
-            <p className="text-gray-600 dark:text-gray-400">Coming soon</p>
-          </div>
+          <Link
+            href="/admin/analytics"
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-800 border-l-4 border-l-indigo-600"
+          >
+              <div className="text-4xl mb-3">📊</div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Analytics</h2>
+            <p className="text-gray-600 dark:text-gray-400">View statistics, trends, and insights</p>
+          </Link>
         </div>
       </div>
     </div>

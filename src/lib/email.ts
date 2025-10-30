@@ -48,3 +48,213 @@ export async function sendEmail({ to, subject, html, text }: MailOptions): Promi
     return { sent: false, reason: (err as Error).message };
   }
 }
+
+export interface MatchNotificationData {
+  userEmail: string;
+  userName: string;
+  lostItemTitle: string;
+  lostItemDescription: string;
+  foundItemTitle: string;
+  foundItemDescription: string;
+  matchScore: number;
+  dashboardUrl: string;
+}
+
+/**
+ * Send email notification when a potential match is found
+ */
+export async function sendMatchNotification(data: MatchNotificationData) {
+  const {
+    userEmail,
+    userName,
+    lostItemTitle,
+    lostItemDescription,
+    foundItemTitle,
+    foundItemDescription,
+    matchScore,
+    dashboardUrl,
+  } = data;
+
+  const subject = `🎉 Potential Match Found for Your Lost Item: ${lostItemTitle}`;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f3f4f6;
+        }
+        .container {
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 30px;
+          text-align: center;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+        }
+        .content {
+          padding: 30px;
+        }
+        .match-score {
+          background: #10b981;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 20px;
+          display: inline-block;
+          font-weight: bold;
+          margin: 10px 0 20px 0;
+        }
+        .item-card {
+          background: #f9fafb;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 15px 0;
+          border-left: 4px solid #667eea;
+        }
+        .item-title {
+          font-size: 18px;
+          font-weight: bold;
+          color: #1f2937;
+          margin-bottom: 10px;
+        }
+        .item-description {
+          color: #6b7280;
+          margin: 0;
+        }
+        .cta-button {
+          display: inline-block;
+          background: #667eea;
+          color: white !important;
+          padding: 15px 30px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: bold;
+          margin: 20px 0;
+        }
+        .steps {
+          background: #eff6ff;
+          padding: 20px;
+          border-radius: 8px;
+          margin-top: 20px;
+        }
+        .steps h3 {
+          margin-top: 0;
+          color: #1e40af;
+        }
+        .footer {
+          text-align: center;
+          color: #9ca3af;
+          font-size: 14px;
+          padding: 20px;
+          border-top: 1px solid #e5e7eb;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✨ Great News, ${userName}!</h1>
+          <p style="margin: 10px 0 0 0;">We found a potential match for your lost item</p>
+        </div>
+        
+        <div class="content">
+          <div style="text-align: center;">
+            <div class="match-score">
+              ${matchScore}% Match Confidence
+            </div>
+          </div>
+          
+          <h2 style="color: #1f2937; margin-top: 25px;">Your Lost Item:</h2>
+          <div class="item-card">
+            <div class="item-title">📢 ${lostItemTitle}</div>
+            <p class="item-description">${lostItemDescription}</p>
+          </div>
+          
+          <h2 style="color: #1f2937;">Found Item Match:</h2>
+          <div class="item-card">
+            <div class="item-title">✨ ${foundItemTitle}</div>
+            <p class="item-description">${foundItemDescription}</p>
+          </div>
+          
+          <p style="margin-top: 25px; color: #4b5563;">
+            Our system identified this as a potential match based on the description, category, location, and other factors.
+          </p>
+          
+          <center>
+            <a href="${dashboardUrl}" class="cta-button">
+              View Match Details →
+            </a>
+          </center>
+          
+          <div class="steps">
+            <h3>📋 Next Steps:</h3>
+            <ol style="margin: 10px 0; padding-left: 20px; color: #374151;">
+              <li>Review the match details in your dashboard</li>
+              <li>Contact the admin if this matches your item</li>
+              <li>Prepare to verify ownership</li>
+            </ol>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p>
+            This is an automated notification from the Lost & Found System.<br>
+            If you did not report this item, please ignore this email.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Great News, ${userName}!
+
+We found a potential match for your lost item.
+
+Match Confidence: ${matchScore}%
+
+Your Lost Item:
+${lostItemTitle}
+${lostItemDescription}
+
+Found Item Match:
+${foundItemTitle}
+${foundItemDescription}
+
+View match details: ${dashboardUrl}
+
+Next Steps:
+1. Review the match details in your dashboard
+2. Contact the admin if this is your item
+3. Prepare to verify ownership
+
+---
+This is an automated notification from the Lost & Found System.
+If you did not report this item, please ignore this email.
+  `.trim();
+
+  return sendEmail({
+    to: userEmail,
+    subject,
+    html,
+    text,
+  });
+}

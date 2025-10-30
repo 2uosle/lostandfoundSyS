@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lost & Found System",
-  description: "Find your lost items or help others recover theirs",
+  title: "NEU Claim — Lost & Found System",
+  description: "NEU Claim is a lost and found system to help you report, browse, and recover items.",
 };
 
 export default function RootLayout({

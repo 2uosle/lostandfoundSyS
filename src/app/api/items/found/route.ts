@@ -22,6 +22,16 @@ export async function POST(req: Request) {
       return errorResponse('Unauthorized - Only admins can report found items', 403);
     }
 
+    // Verify user exists in database
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return errorResponse('User not found - Please re-login', 404);
+    }
+
     // Image is required for found items
     if (!body.image) {
       return errorResponse('Photo is required for found items', 400);
@@ -35,7 +45,7 @@ export async function POST(req: Request) {
       foundDate: body.date,
       category: body.category,
       contactInfo: body.contactInfo,
-      userId,
+      userId: session.user.id,
     });
 
     // Validate image

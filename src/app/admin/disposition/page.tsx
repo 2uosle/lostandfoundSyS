@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 type DispositionItem = {
   id: string;
@@ -86,11 +87,7 @@ export default function DispositionDashboard() {
     load(activeTab);
   }, [activeTab]);
 
-  const counts = useMemo(() => {
-    const donated = items.filter((i) => i.status === 'DONATED').length;
-    const disposed = items.filter((i) => i.status === 'DISPOSED').length;
-    return { donated, disposed };
-  }, [items]);
+  // Removed unused counts memo to reduce lint noise
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -145,7 +142,15 @@ export default function DispositionDashboard() {
             {items.map((item) => (
               <div key={`${item.itemType}-${item.id}`} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden">
                 {item.imageUrl && (
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-48 object-cover" />
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.title}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                  </div>
                 )}
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
@@ -187,7 +192,7 @@ export default function DispositionDashboard() {
                           } else {
                             alert(data.error || 'Failed to restore');
                           }
-                        } catch (e) {
+                        } catch {
                           alert('Failed to restore');
                         }
                       }}

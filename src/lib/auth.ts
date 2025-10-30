@@ -109,22 +109,35 @@ export const authOptions: NextAuthOptions = {
         try {
           // Check domain restriction
           if (!isAllowedDomain(user.email)) {
+            console.error(`Sign-in rejected: ${user.email} is not from an allowed domain`);
             return false;
           }
 
-          // Check if user exists, create if not
+          // Check if user exists
           let dbUser = await prismaAny.user.findUnique({
             where: { email: user.email },
           });
 
+          // Auto-register new users with institutional email
           if (!dbUser) {
+            console.log(`Auto-registering new user: ${user.email}`);
             dbUser = await prismaAny.user.create({
               data: {
                 email: user.email,
-                name: user.name || "",
+                name: user.name || profile?.name || user.email.split('@')[0],
                 role: "STUDENT",
+                // password is null for OAuth users
               },
             });
+            console.log(`Successfully created user: ${dbUser.id}`);
+          } else {
+            // Update name if it changed in Google profile
+            if (user.name && user.name !== dbUser.name) {
+              await prismaAny.user.update({
+                where: { id: dbUser.id },
+                data: { name: user.name },
+              });
+            }
           }
 
           return true;

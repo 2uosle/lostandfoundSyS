@@ -18,8 +18,7 @@ export async function GET(req: Request, context: RouteContext) {
 
   // Helper to load payload tailored to requester role (like GET /api/handoff/[id])
   async function loadPayload() {
-    const anyPrisma: any = prisma;
-    const hs = await anyPrisma.handoffSession.findUnique({ where: { id } });
+    const hs = await prisma.handoffSession.findUnique({ where: { id } });
     if (!hs) return null;
   const role = inferRole(hs, session!.user.id);
     if (!role) return null;
@@ -50,9 +49,9 @@ export async function GET(req: Request, context: RouteContext) {
   }
 
   const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
+  async start(controller) {
       // Write headers in body as SSE lines
-      const send = (data: any) => {
+      const send = (data: unknown) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       };
 
@@ -72,12 +71,11 @@ export async function GET(req: Request, context: RouteContext) {
       });
 
       // Cleanup on client disconnect
-      const abort = (reason?: any) => {
+      const abort = () => {
         try { clearInterval(keep); off(); } catch {}
         try { controller.close(); } catch {}
       };
-      // @ts-ignore - Node fetch provides signal
-      req.signal?.addEventListener('abort', abort);
+  req.signal?.addEventListener('abort', abort);
     },
   });
 

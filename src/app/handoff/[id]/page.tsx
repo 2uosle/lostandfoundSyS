@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { showToast } from '@/components/Toast';
@@ -22,7 +22,7 @@ export default function HandoffPage() {
     }
   }, [status, router, handoffId]);
 
-  async function load(opts?: { initial?: boolean }) {
+  const load = useCallback(async (opts?: { initial?: boolean }) => {
     const showInitial = !!opts?.initial;
     if (showInitial) setInitialLoading(true);
     try {
@@ -38,13 +38,13 @@ export default function HandoffPage() {
     } finally {
       if (showInitial) setInitialLoading(false);
     }
-  }
+  }, [handoffId]);
 
   useEffect(() => {
     if (session?.user && handoffId) {
       load({ initial: true });
     }
-  }, [session, handoffId]);
+  }, [session, handoffId, load]);
 
   // Subscribe to SSE for near-instant updates
   useEffect(() => {
@@ -106,7 +106,6 @@ export default function HandoffPage() {
   }
 
   const { role, myCode, status: hsStatus, locked, expiresAt, ownerVerifiedAdmin, adminVerifiedOwner, message } = sessionData;
-  const verificationComplete = !!ownerVerifiedAdmin && !!adminVerifiedOwner;
   const expiresLabel = expiresAt ? formatDistanceToNowStrict(new Date(expiresAt), { addSuffix: true }) : '';
 
   const isDone = hsStatus === 'COMPLETED';

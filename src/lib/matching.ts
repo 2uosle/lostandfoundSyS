@@ -28,6 +28,11 @@ export interface MatchScore {
     descriptionSimilarity: number;
     dateProximity: number;
     locationMatch: number;
+    combinedSimilarity?: number;
+    crossFieldBonus?: number;
+    colorMatch?: number;
+    brandMatch?: number;
+    numberMatch?: number;
   };
 }
 
@@ -119,6 +124,31 @@ function extractKeywords(text: string): string[] {
 }
 
 /**
+ * Lightweight tokenization for cosine similarity
+ */
+function tokenize(text: string): Map<string, number> {
+  const tokens = extractKeywords(text);
+  const freq = new Map<string, number>();
+  for (const t of tokens) freq.set(t, (freq.get(t) || 0) + 1);
+  return freq;
+}
+
+function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let dot = 0;
+  let aMag = 0;
+  let bMag = 0;
+  for (const [, v] of a) aMag += v * v;
+  for (const [, v] of b) bMag += v * v;
+  for (const [k, av] of a) {
+    const bv = b.get(k) || 0;
+    dot += av * bv;
+  }
+  const denom = Math.sqrt(aMag) * Math.sqrt(bMag);
+  return denom === 0 ? 0 : dot / denom;
+}
+
+/**
  * Calculate keyword overlap between two texts
  */
 function calculateKeywordOverlap(text1: string, text2: string): number {
@@ -158,8 +188,12 @@ function calculateStringSimilarity(str1: string, str2: string): number {
   // Calculate keyword overlap
   const keywordSimilarity = calculateKeywordOverlap(s1, s2);
   
-  // Weighted combination (60% Levenshtein, 40% keyword overlap)
-  return levenshteinSimilarity * 0.6 + keywordSimilarity * 0.4;
+  // Add cosine similarity over tokens for better semantics
+  const cos = cosineSimilarity(tokenize(s1), tokenize(s2));
+
+  // Weighted combination
+  // 50% Levenshtein, 25% keyword overlap (Jaccard), 25% cosine
+  return levenshteinSimilarity * 0.5 + keywordSimilarity * 0.25 + cos * 0.25;
 }
 
 /**
@@ -268,6 +302,25 @@ function calculateCombinedTextSimilarity(
   return calculateStringSimilarity(lostCombined, foundCombined);
 }
 
+// Domain features: colors, brands, numbers
+const COLORS = ['black','white','gray','silver','red','blue','green','yellow','purple','pink','orange','brown','gold'];
+const BRANDS = ['apple','iphone','samsung','huawei','oppo','vivo','xiaomi','asus','acer','lenovo','hp','dell','sony','canon','nikon','logitech'];
+
+function extractColors(text: string): Set<string> {
+  const t = text.toLowerCase();
+  return new Set(COLORS.filter(c => new RegExp(`\\b${c}\\b`).test(t)));
+}
+
+function extractBrands(text: string): Set<string> {
+  const t = text.toLowerCase();
+  return new Set(BRANDS.filter(b => new RegExp(`\\b${b}\\b`).test(t)));
+}
+
+function extractNumbers(text: string): Set<string> {
+  const matches = text.toLowerCase().match(/\b\d{2,}\b/g) || [];
+  return new Set(matches);
+}
+
 /**
  * Calculate match score for a lost item against a found item
  */
@@ -278,11 +331,11 @@ export function calculateMatchScore(
   // Category match (40 points - most important)
   const categoryMatch = lost.category === found.category ? 40 : 0;
   
-  // Title similarity (20 points) - with fuzzy matching
+  // Title similarity (20 points)
   const titleSimilarity = calculateStringSimilarity(lost.title, found.title) * 20;
   
-  // Description similarity (15 points) - with keyword matching
-  const descriptionSimilarity = calculateStringSimilarity(lost.description, found.description) * 15;
+  // Description similarity (12 points)
+  const descriptionSimilarity = calculateStringSimilarity(lost.description, found.description) * 12;
   
   // Cross-field bonus (10 points) - NEW!
   // Rewards when keywords from title appear in description and vice versa
@@ -293,7 +346,7 @@ export function calculateMatchScore(
     found.description
   );
   
-  // Combined text similarity (5 points) - NEW!
+  // Combined text similarity (5 points)
   // Helps when details are distributed differently across fields
   const combinedSimilarity = calculateCombinedTextSimilarity(
     lost.title,
@@ -307,10 +360,29 @@ export function calculateMatchScore(
   
   // Location similarity (10 points) - with synonym awareness
   const locationMatch = calculateLocationSimilarity(lost.location, found.location);
+
+  // Color/Brand/Number signals
+  const lostCombined = `${lost.title} ${lost.description}`;
+  const foundCombined = `${found.title} ${found.description}`;
+  const lostColors = extractColors(lostCombined);
+  const foundColors = extractColors(foundCombined);
+  const colorIntersection = [...lostColors].filter(c => foundColors.has(c)).length;
+  const colorMatch = Math.min(4, colorIntersection * 2); // up to 4 points
+
+  const lostBrands = extractBrands(lostCombined);
+  const foundBrands = extractBrands(foundCombined);
+  const brandIntersection = [...lostBrands].filter(b => foundBrands.has(b)).length;
+  const brandMatch = Math.min(2, brandIntersection * 2); // up to 2 points
+
+  const lostNums = extractNumbers(lostCombined);
+  const foundNums = extractNumbers(foundCombined);
+  const numberIntersection = [...lostNums].filter(n => foundNums.has(n)).length;
+  const numberMatch = Math.min(1, numberIntersection * 1); // up to 1 point
   
   // Total score out of 100
-  const totalScore = categoryMatch + titleSimilarity + descriptionSimilarity + 
-                    crossFieldBonus + combinedSimilarity + dateProximity + locationMatch;
+  const totalScore = categoryMatch + titleSimilarity + descriptionSimilarity +
+    crossFieldBonus + combinedSimilarity + dateProximity + locationMatch +
+    colorMatch + brandMatch + numberMatch;
   
   return {
     item: found,
@@ -321,6 +393,11 @@ export function calculateMatchScore(
       descriptionSimilarity: Math.round(descriptionSimilarity * 10) / 10,
       dateProximity,
       locationMatch: Math.round(locationMatch * 10) / 10,
+      combinedSimilarity: Math.round(combinedSimilarity * 10) / 10,
+      crossFieldBonus,
+      colorMatch,
+      brandMatch,
+      numberMatch,
     },
   };
 }

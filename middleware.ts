@@ -105,6 +105,18 @@ export async function middleware(req: NextRequest) {
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   
+  // CSRF Protection - ensure same-origin requests only
+  const origin = req.headers.get('origin');
+  const host = req.headers.get('host');
+  
+  if (origin && host) {
+    const originUrl = new URL(origin);
+    if (originUrl.host === host) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+    }
+  }
+  
   // Only set HSTS in production with HTTPS
   if (process.env.NODE_ENV === 'production') {
     response.headers.set(

@@ -18,18 +18,18 @@ export default function Navigation() {
                     dark:bg-gray-900/80 dark:border-gray-800
                     sticky top-0 z-40 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="relative flex items-center h-16">
           {/* Logo/Brand */}
           <Link href="/" className="flex items-center space-x-2 group">
             <span className="text-2xl group-hover:scale-110 transition-transform">🔍</span>
             <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 
                            bg-clip-text text-transparent">
-              Lost & Found
+              NEU Claim
             </span>
           </Link>
 
-          {/* Main Navigation */}
-          <div className="hidden md:flex items-center space-x-2">
+          {/* Main Navigation (centered on desktop) */}
+          <div className="hidden md:flex items-center space-x-2 absolute left-1/2 -translate-x-1/2">
             <Link
               href="/lost"
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
@@ -95,8 +95,8 @@ export default function Navigation() {
             )}
           </div>
 
-          {/* Auth Section */}
-          <div className="flex items-center space-x-3">
+          {/* Auth Section (right aligned) */}
+          <div className="ml-auto flex items-center space-x-3">
             {/* Notification Bell - Only show for logged-in users */}
             {session?.user && <NotificationBell />}
             {/* Theme toggle */}

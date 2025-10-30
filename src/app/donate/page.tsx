@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { format } from 'date-fns';
 import { showToast } from '@/components/Toast';
 
@@ -131,7 +132,15 @@ export default function DonatePage() {
             {eligible.map(item => (
               <div key={item.id} className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
                 {item.imageUrl && (
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-48 object-cover" />
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.title}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                  </div>
                 )}
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">

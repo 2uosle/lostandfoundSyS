@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import { $Enums } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
@@ -15,8 +14,7 @@ export async function GET(_req: Request, context: RouteContext) {
 
     const { id } = await context.params;
 
-    const anyPrisma: any = prisma;
-    const hs = await anyPrisma.handoffSession.findUnique({
+    const hs = await prisma.handoffSession.findUnique({
       where: { id },
     });
     if (!hs) return errorResponse('Session not found', 404);

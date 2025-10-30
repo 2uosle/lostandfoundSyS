@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { showToast } from '@/components/Toast';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -107,7 +108,7 @@ export default function AdminItemsPage() {
       } else {
         showToast(data.error || 'Failed to load items', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to load items', 'error');
     } finally {
       setLoading(false);
@@ -131,7 +132,7 @@ export default function AdminItemsPage() {
       } else {
         showToast(data.error || 'Failed to delete item', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to delete item', 'error');
     }
   }
@@ -176,7 +177,7 @@ export default function AdminItemsPage() {
       } else {
         showToast(data.error || 'Action failed', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('Action failed', 'error');
     }
   }
@@ -201,7 +202,7 @@ export default function AdminItemsPage() {
         showToast(data.error || 'Failed to find matches', 'error');
         setMatchingFor(null);
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to find matches', 'error');
       setMatchingFor(null);
     }
@@ -327,11 +328,15 @@ export default function AdminItemsPage() {
               <div key={item.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
                 <div className="flex gap-6">
                   {item.imageUrl && (
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
-                    />
+                    <div className="relative w-32 h-32 flex-shrink-0">
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        fill
+                        sizes="128px"
+                        className="object-cover rounded-lg"
+                      />
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-3">
@@ -372,14 +377,19 @@ export default function AdminItemsPage() {
                         <span className="font-medium text-gray-700">Date:</span>
                         <span className="ml-2">{format(new Date(item.lostDate), 'MMM dd, yyyy')}</span>
                       </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Contact:</span>
-                        <span className="ml-2">{item.contactInfo}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-700">Reported by:</span>
+                        <div className="flex items-center gap-1">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          <span className="ml-1 font-medium text-blue-700">{item.contactInfo}</span>
+                        </div>
                       </div>
                     </div>
                     {item.reportedBy && (
                       <p className="text-xs text-gray-500 mb-4">
-                        Reported by: {item.reportedBy.name || item.reportedBy.email || 'Anonymous'}
+                        User: {item.reportedBy.name || item.reportedBy.email || 'Anonymous'}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-2">
@@ -464,11 +474,15 @@ export default function AdminItemsPage() {
                       <div key={candidate.item.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                         <div className="flex gap-4">
                           {candidate.item.imageUrl && (
-                            <img
-                              src={candidate.item.imageUrl}
-                              alt={candidate.item.title}
-                              className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
-                            />
+                            <div className="relative w-24 h-24 flex-shrink-0">
+                              <Image
+                                src={candidate.item.imageUrl}
+                                alt={candidate.item.title}
+                                fill
+                                sizes="96px"
+                                className="object-cover rounded-lg"
+                              />
+                            </div>
                           )}
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">
@@ -550,11 +564,15 @@ export default function AdminItemsPage() {
                       <h3 className="text-xl font-bold text-blue-600">Lost Item</h3>
                     </div>
                     {compareView.lost.imageUrl && (
-                      <img
-                        src={compareView.lost.imageUrl}
-                        alt={compareView.lost.title}
-                        className="w-full h-48 object-cover rounded-lg mb-4"
-                      />
+                      <div className="relative w-full h-48 rounded-lg mb-4 overflow-hidden">
+                        <Image
+                          src={compareView.lost.imageUrl}
+                          alt={compareView.lost.title}
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-3">
                       <div>
@@ -578,12 +596,17 @@ export default function AdminItemsPage() {
                         <p className="text-gray-900">{format(new Date(compareView.lost.lostDate), 'MMM dd, yyyy')}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Contact:</label>
-                        <p className="text-gray-900">{compareView.lost.contactInfo}</p>
+                        <label className="text-sm font-semibold text-gray-700">Reported by:</label>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-gray-900 font-medium">{compareView.lost.contactInfo}</p>
+                        </div>
                       </div>
                       {compareView.lost.reportedBy && (
                         <div className="pt-3 mt-3 border-t border-blue-200">
-                          <label className="text-sm font-semibold text-gray-700">Reported By:</label>
+                          <label className="text-sm font-semibold text-gray-700">User Account:</label>
                           <p className="text-gray-900">
                             {compareView.lost.reportedBy.name || 'Anonymous'}
                           </p>
@@ -602,11 +625,15 @@ export default function AdminItemsPage() {
                       <h3 className="text-xl font-bold text-green-600">Found Item</h3>
                     </div>
                     {compareView.found.item.imageUrl && (
-                      <img
-                        src={compareView.found.item.imageUrl}
-                        alt={compareView.found.item.title}
-                        className="w-full h-48 object-cover rounded-lg mb-4"
-                      />
+                      <div className="relative w-full h-48 rounded-lg mb-4 overflow-hidden">
+                        <Image
+                          src={compareView.found.item.imageUrl}
+                          alt={compareView.found.item.title}
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-3">
                       <div>
@@ -630,12 +657,17 @@ export default function AdminItemsPage() {
                         <p className="text-gray-900">{format(new Date(compareView.found.item.foundDate), 'MMM dd, yyyy')}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-semibold text-gray-700">Contact:</label>
-                        <p className="text-gray-900">{compareView.found.item.contactInfo}</p>
+                        <label className="text-sm font-semibold text-gray-700">Reported by:</label>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-gray-900 font-medium">{compareView.found.item.contactInfo}</p>
+                        </div>
                       </div>
                       {compareView.found.item.reportedBy && (
                         <div className="pt-3 mt-3 border-t border-green-200">
-                          <label className="text-sm font-semibold text-gray-700">Reported By:</label>
+                          <label className="text-sm font-semibold text-gray-700">User Account:</label>
                           <p className="text-gray-900">
                             {compareView.found.item.reportedBy.name || 'Anonymous'}
                           </p>

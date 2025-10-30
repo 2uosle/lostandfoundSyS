@@ -30,7 +30,7 @@ async function testRateLimiting() {
       try {
         await testLimiter.check(5, testKey);
         console.log(`   ✅ Request ${i}/5 passed`);
-      } catch (error) {
+      } catch {
         console.log(`   ❌ Request ${i}/5 blocked (rate limit exceeded)`);
       }
     }

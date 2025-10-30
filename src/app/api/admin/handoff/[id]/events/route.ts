@@ -16,8 +16,7 @@ export async function GET(req: Request, context: RouteContext) {
   const encoder = new TextEncoder();
 
   async function loadPayload() {
-    const anyPrisma: any = prisma;
-    const hs = await anyPrisma.handoffSession.findUnique({ where: { id } });
+    const hs = await prisma.handoffSession.findUnique({ where: { id } });
     if (!hs) return null;
     return {
       id: hs.id,
@@ -38,7 +37,7 @@ export async function GET(req: Request, context: RouteContext) {
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (data: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+  const send = (data: unknown) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
       const initial = await loadPayload();
       if (initial) send({ type: 'init', data: initial });
@@ -50,9 +49,8 @@ export async function GET(req: Request, context: RouteContext) {
         if (payload) send({ type: 'update', data: payload });
       });
 
-      const abort = () => { try { clearInterval(keep); off(); controller.close(); } catch {} };
-      // @ts-ignore
-      req.signal?.addEventListener('abort', abort);
+  const abort = () => { try { clearInterval(keep); off(); controller.close(); } catch {} };
+  req.signal?.addEventListener('abort', abort);
     },
   });
 
