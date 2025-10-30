@@ -50,6 +50,27 @@ export async function POST(req: Request) {
 
     // Use transaction to ensure atomicity
     const item = await prisma.$transaction(async (tx) => {
+      let imageUrl: string | null = null;
+      
+      // Handle image - on Vercel we can't save to filesystem, so store base64 directly
+      if (body.image) {
+        // Validate the image format
+        const validation = await import('@/lib/image-validation').then(m => m.validateBase64Image(body.image));
+        if (!validation.valid) {
+          throw new Error('Invalid image format');
+        }
+        
+        // In production (Vercel), store as base64. In development, try to save to disk
+        if (process.env.VERCEL) {
+          // On Vercel: Store base64 directly (temporary solution)
+          imageUrl = body.image;
+        } else {
+          // Local development: Save to disk
+          const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+          imageUrl = await saveValidatedImage(body.image, '', uploadsDir);
+        }
+      }
+      
       // Create the lost item record
       const createdItem = await tx.lostItem.create({
         data: {
@@ -61,38 +82,11 @@ export async function POST(req: Request) {
           contactInfo: validatedItem.contactInfo,
           status: 'PENDING',
           userId: validatedItem.userId,
+          imageUrl: imageUrl,
         },
       });
 
-      // Handle image upload within transaction
-      if (body.image) {
-        const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-        const imageUrl = await saveValidatedImage(body.image, createdItem.id, uploadsDir);
-        
-        // Update item with image URL
-        const updatedItem = await tx.lostItem.update({
-          where: { id: createdItem.id },
-          data: { imageUrl },
-        });
-        
-        // Create notification for the user
-        if (validatedItem.userId) {
-          await tx.notification.create({
-            data: {
-              userId: validatedItem.userId,
-              type: $Enums.NotificationType.ITEM_REPORTED,
-              title: 'Lost Item Reported',
-              message: `Your lost item "${validatedItem.title}" has been successfully reported. We'll notify you if we find a match.`,
-              itemId: createdItem.id,
-              itemType: 'LOST',
-            },
-          });
-        }
-        
-        return updatedItem;
-      }
-      
-      // Create notification for the user (when no image)
+      // Create notification for the user
       if (validatedItem.userId) {
         await tx.notification.create({
           data: {
