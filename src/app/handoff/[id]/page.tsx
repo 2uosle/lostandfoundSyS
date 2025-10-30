@@ -76,6 +76,13 @@ export default function HandoffPage() {
       if (res.ok && data.success) {
         showToast(data.data.message, 'success');
         await load();
+        
+        // If handoff is complete and user is admin, redirect to admin dashboard
+        if (data.data.status === 'COMPLETED' && session?.user?.role === 'ADMIN') {
+          setTimeout(() => {
+            router.push('/admin/dashboard');
+          }, 2000); // 2 second delay to show success message
+        }
       } else {
         showToast(data.error || 'Incorrect code', 'error');
         await load();

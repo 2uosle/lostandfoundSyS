@@ -199,15 +199,15 @@ export async function sendMatchNotification(data: MatchNotificationData) {
           
           <center>
             <a href="${dashboardUrl}" class="cta-button">
-              View Match Details →
+              View in Dashboard →
             </a>
           </center>
           
           <div class="steps">
             <h3>📋 Next Steps:</h3>
             <ol style="margin: 10px 0; padding-left: 20px; color: #374151;">
-              <li>Review the match details in your dashboard</li>
-              <li>Contact the admin if this matches your item</li>
+              <li><strong>Come to the OSAS Office (Bring your ID)</strong></li>
+              <li>Contact the admin to verify this match</li>
               <li>Prepare to verify ownership</li>
             </ol>
           </div>
@@ -215,7 +215,7 @@ export async function sendMatchNotification(data: MatchNotificationData) {
         
         <div class="footer">
           <p>
-            This is an automated notification from the Lost & Found System.<br>
+            This is an automated notification from the ClaimNEULost & Found System.<br>
             If you did not report this item, please ignore this email.
           </p>
         </div>
@@ -239,11 +239,11 @@ Found Item Match:
 ${foundItemTitle}
 ${foundItemDescription}
 
-View match details: ${dashboardUrl}
+View in dashboard: ${dashboardUrl}
 
 Next Steps:
-1. Review the match details in your dashboard
-2. Contact the admin if this is your item
+1. Come to the OSAS Office (Bring your ID)
+2. Contact the admin to verify this match
 3. Prepare to verify ownership
 
 ---
