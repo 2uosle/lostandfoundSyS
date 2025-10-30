@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import { playNotificationSound, playMatchSound } from '@/lib/sounds';
 
 type Notification = {
   id: string;
@@ -21,6 +22,7 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
 
   const loadNotifications = async () => {
     setLoading(true);
@@ -28,8 +30,25 @@ export default function NotificationBell() {
       const res = await fetch('/api/notifications');
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.data.notifications);
-        setUnreadCount(data.data.unreadCount);
+        const newNotifications = data.data.notifications;
+        const newUnreadCount = data.data.unreadCount;
+        
+        // Check if there are new unread notifications
+        if (newUnreadCount > previousUnreadCount && previousUnreadCount > 0) {
+          // Find the newest notification
+          const newestNotification = newNotifications.find((n: Notification) => !n.read);
+          
+          // Play appropriate sound based on notification type
+          if (newestNotification?.type === 'ITEM_MATCHED' || newestNotification?.type === 'MATCH_FOUND') {
+            playMatchSound();
+          } else {
+            playNotificationSound();
+          }
+        }
+        
+        setNotifications(newNotifications);
+        setUnreadCount(newUnreadCount);
+        setPreviousUnreadCount(newUnreadCount);
       }
     } catch (error) {
       console.error('Failed to load notifications:', error);

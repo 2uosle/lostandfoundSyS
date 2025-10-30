@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { showToast } from './Toast';
+import { playSuccessSound } from '@/lib/sounds';
 
 type ItemReportFormProps = {
   type: 'lost' | 'found';
@@ -144,6 +145,10 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
       setSubmittedItemTitle(formData.title);
       setShowConfirmation(false);
       setShowSuccessModal(true);
+      
+      // Play success sound
+      playSuccessSound();
+      
       showToast(
         isLost 
           ? 'Lost item report submitted successfully!' 

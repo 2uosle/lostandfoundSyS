@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { showToast } from '@/components/Toast';
 import Image from 'next/image';
+import { playCompleteSound, playMatchSound } from '@/lib/sounds';
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -178,6 +179,8 @@ function DashboardContent() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        // Play completion sound for successful handoff verification
+        playCompleteSound();
         showToast(data.data.message, 'success');
         // Reload items and handoff session
         await loadItems();
@@ -214,6 +217,9 @@ function DashboardContent() {
       }
 
       showToast('Item marked as resolved!', 'success');
+      
+      // Play completion sound for resolving item
+      playCompleteSound();
       
       // Update local state
       setLostItems(prev => 
