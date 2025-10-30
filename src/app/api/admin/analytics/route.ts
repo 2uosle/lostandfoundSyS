@@ -36,9 +36,13 @@ export async function GET(req: Request) {
       // Total found items
       prisma.foundItem.count(),
       
-      // Matched items
+      // Matched items (including MATCHED and CLAIMED)
       prisma.lostItem.count({
-        where: { status: 'MATCHED' }
+        where: { 
+          status: {
+            in: ['MATCHED', 'CLAIMED']
+          }
+        }
       }),
       
       // Resolved items

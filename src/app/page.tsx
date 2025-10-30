@@ -24,7 +24,7 @@ export default function Home() {
             {/* Main Heading with stagger animation */}
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight animate-in slide-in-from-bottom-4 duration-700 delay-150">
               <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent bg-200% animate-gradient-flow">
-                NEU Claim
+                ClaimNEU
               </span>
             </h1>
             
@@ -34,7 +34,7 @@ export default function Home() {
             </p>
             
             <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 mb-16 max-w-2xl mx-auto animate-in fade-in duration-700 delay-500">
-              NEU Claim is a lost and found system. Report lost items, browse found items,
+              ClaimNEU is a lost and found system. Report lost items, browse found items,
               and use our intelligent matching system to help recover what matters most.
             </p>
             

@@ -629,9 +629,16 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   has been submitted successfully. {isLost ? "We'll notify you if we find a match." : "We'll check for potential matches."}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  You can also check your notifications for updates.
-                </p>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+                    <strong>📧 Check your email</strong> for match notifications
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-300">
+                    • Check your inbox and <strong>spam folder</strong> for updates
+                    <br />
+                    • You can also view notifications in your dashboard
+                  </p>
+                </div>
                 <button
                   onClick={handleCloseModal}
                   className={`w-full px-6 py-3 text-white rounded-xl font-semibold

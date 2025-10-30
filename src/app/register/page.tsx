@@ -69,7 +69,7 @@ export default function RegisterPage(){
             Create Account
           </h1>
           <p className="text-gray-600 dark:text-gray-400 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
-            Join the NEU Claim community
+            Join the ClaimNEU community
           </p>
         </div>
 

@@ -22,9 +22,9 @@ export default function Navigation() {
           {/* Logo/Brand */}
           <Link href="/" className="flex items-center space-x-2 group">
             <span className="text-2xl group-hover:scale-110 transition-transform">🔍</span>
-            <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 
                            bg-clip-text text-transparent">
-              NEU Claim
+              ClaimNEU
             </span>
           </Link>
 

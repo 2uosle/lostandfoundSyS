@@ -252,72 +252,90 @@ export default function AnalyticsPage() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Lost Items</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Lost Items</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {data.summary.totalLostItems}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  All reported lost items
                 </p>
               </div>
               <div className="text-4xl">📢</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Found Items</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Found Items</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {data.summary.totalFoundItems}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Items found by community
                 </p>
               </div>
               <div className="text-4xl">✨</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-lg shadow-sm border border-green-200 dark:border-green-800 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Match Success Rate</p>
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">Match Success Rate</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                   {data.summary.matchSuccessRate}%
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                  Matched + resolved items
                 </p>
               </div>
               <div className="text-4xl">🎯</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Matched Items</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Matched Items</p>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                   {data.summary.matchedItems}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Items successfully matched & claimed
                 </p>
               </div>
               <div className="text-4xl">🤝</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Resolved Items</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Resolved Items</p>
+                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                   {data.summary.resolvedItems}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Items marked as resolved
                 </p>
               </div>
               <div className="text-4xl">✅</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Active Users</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Active Users</p>
+                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                   {data.summary.activeUsers}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Users with recent activity
                 </p>
               </div>
               <div className="text-4xl">👥</div>
