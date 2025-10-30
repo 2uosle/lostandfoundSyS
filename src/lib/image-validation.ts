@@ -8,9 +8,19 @@ const JPEG_MAGIC = Buffer.from([0xFF, 0xD8, 0xFF]);
  * Sanitize filename to prevent path traversal attacks
  */
 export function sanitizeFilename(filename: string): string {
-  // Remove any path components, keep only the filename
-  const base = path.basename(filename);
-  // Remove any non-alphanumeric characters except dots and dashes
+  // First, get just the filename using path.basename to handle normal paths
+  let base = path.basename(filename);
+  
+  // Remove Windows drive letters that might still be in the basename
+  base = base.replace(/^[a-zA-Z]:/, '');
+  
+  // Remove any remaining path separators (handles edge cases)
+  base = base.replace(/[/\\]/g, '');
+  
+  // Remove path traversal sequences
+  base = base.replace(/\.\./g, '');
+  
+  // Remove any remaining non-alphanumeric characters except dots and dashes
   return base.replace(/[^a-zA-Z0-9.-]/g, '_');
 }
 

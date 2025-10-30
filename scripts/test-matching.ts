@@ -121,7 +121,7 @@ async function main() {
 
   // Create Found Items
   console.log('✨ Creating 5 found items...');
-  const foundIPhone = await prisma.foundItem.create({
+  await prisma.foundItem.create({
     data: {
       title: 'Black iPhone with Blue Case',
       description: 'Found iPhone 13 Pro with blue case near the main library entrance.',
@@ -133,7 +133,7 @@ async function main() {
     },
   });
 
-  const foundWallet = await prisma.foundItem.create({
+  await prisma.foundItem.create({
     data: {
       title: 'Leather Wallet',
       description: 'Brown leather wallet found in the gym. Contains ID and cards.',
@@ -145,7 +145,7 @@ async function main() {
     },
   });
 
-  const foundKeys = await prisma.foundItem.create({
+  await prisma.foundItem.create({
     data: {
       title: 'Car Keys with Keychain',
       description: 'Found car keys with red keychain, looks like Toyota keys.',
@@ -157,7 +157,7 @@ async function main() {
     },
   });
 
-  const foundAirPods = await prisma.foundItem.create({
+  await prisma.foundItem.create({
     data: {
       title: 'Apple AirPods with Case',
       description: 'Found AirPods Pro with white charging case in the cafeteria.',
@@ -169,7 +169,7 @@ async function main() {
     },
   });
 
-  const foundLaptop = await prisma.foundItem.create({
+  await prisma.foundItem.create({
     data: {
       title: 'MacBook Laptop',
       description: 'Found MacBook Pro laptop. Silver color.',

@@ -6,6 +6,19 @@ import { useSession } from 'next-auth/react';
 import { showToast } from '@/components/Toast';
 import { formatDistanceToNowStrict } from 'date-fns';
 
+type HandoffInfo = {
+  id: string;
+  status: string;
+  expiresAt: string;
+  locked: boolean;
+  ownerCode?: string;
+  adminCode?: string;
+  ownerVerifiedAdmin?: boolean;
+  adminVerifiedOwner?: boolean;
+  ownerAttempts?: number;
+  adminAttempts?: number;
+};
+
 export default function AdminHandoffConsole() {
   const { data: session, status } = useSession();
   const params = useParams();
@@ -13,7 +26,7 @@ export default function AdminHandoffConsole() {
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
   const [initialLoading, setInitialLoading] = useState(true);
-  const [info, setInfo] = useState<any | null>(null);
+  const [info, setInfo] = useState<HandoffInfo | null>(null);
   const [ownerInput, setOwnerInput] = useState('');
   const [submitting, setSubmitting] = useState<'OWNER'|'FINDER'|null>(null);
 
@@ -134,7 +147,7 @@ export default function AdminHandoffConsole() {
 
         {!done && !expired && !info.locked && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Enter Owner's presented code</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Enter Owner&apos;s presented code</label>
             <input
               type="text" inputMode="numeric" pattern="[0-9]*" value={ownerInput}
               onChange={(e) => setOwnerInput(e.target.value.replace(/\D/g, '').slice(0,6))}

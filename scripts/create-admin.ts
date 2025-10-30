@@ -16,7 +16,10 @@ async function main() {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     console.log('User already exists. Updating role to ADMIN.');
-    await prisma.user.update({ where: { email }, data: { role: 'ADMIN', password: hashed } as any });
+    await prisma.user.update({ 
+      where: { email }, 
+      data: { role: 'ADMIN', password: hashed } 
+    });
     console.log('User updated.');
     process.exit(0);
   }

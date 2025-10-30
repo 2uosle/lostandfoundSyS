@@ -22,7 +22,7 @@ const writeLimiter = rateLimit({
 /**
  * Get identifier for rate limiting (IP or user ID if authenticated)
  */
-function getRateLimitIdentifier(req: NextRequest, token: any): string {
+function getRateLimitIdentifier(req: NextRequest, token: { sub?: string } | null): string {
   // Prefer user ID for authenticated requests
   if (token?.sub) {
     return `user:${token.sub}`;
