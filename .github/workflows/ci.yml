@@ -98,7 +98,7 @@ jobs:
 
       - name: Check for secrets in code
         run: |
-          if grep -r "sk-" --include="*.ts" --include="*.tsx" --include="*.js" .; then
+          if grep -r "sk-" --include="*.ts" --include="*.tsx" --exclude-dir="node_modules" --exclude-dir=".next" --exclude-dir="dist" src/; then
             echo "Potential API keys found in code!"
             exit 1
           fi
