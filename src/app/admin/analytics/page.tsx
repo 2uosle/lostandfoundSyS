@@ -43,7 +43,17 @@ interface AnalyticsData {
   timeSeriesData: { date: string; lost: number; found: number }[];
 }
 
-const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30cfd0'];
+// Updated color palette to match ClaimNEU brand - harmonious blues and purples
+const COLORS = [
+  '#3B82F6', // Blue-500 (primary brand)
+  '#8B5CF6', // Violet-500 
+  '#06B6D4', // Cyan-500
+  '#10B981', // Emerald-500
+  '#6366F1', // Indigo-500
+  '#EC4899', // Pink-500
+  '#F59E0B', // Amber-500
+  '#14B8A6'  // Teal-500
+];
 
 export default function AnalyticsPage() {
   const { data: session, status } = useSession();
