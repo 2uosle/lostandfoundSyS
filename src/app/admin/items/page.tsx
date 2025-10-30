@@ -65,6 +65,7 @@ export default function AdminItemsPage() {
   const [loading, setLoading] = useState(false);
   const [matchCandidates, setMatchCandidates] = useState<MatchCandidate[]>([]);
   const [matchingFor, setMatchingFor] = useState<string | null>(null);
+  const [loadingMatches, setLoadingMatches] = useState(false);
   const [compareView, setCompareView] = useState<{ lost: Item; found: MatchCandidate } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -184,6 +185,8 @@ export default function AdminItemsPage() {
 
   async function openMatchModal(id: string) {
     setMatchingFor(id);
+    setLoadingMatches(true);
+    setMatchCandidates([]); // Clear previous matches
     try {
       const res = await fetch('/api/match', {
         method: 'POST',
@@ -205,6 +208,36 @@ export default function AdminItemsPage() {
     } catch {
       showToast('Failed to find matches', 'error');
       setMatchingFor(null);
+    } finally {
+      setLoadingMatches(false);
+    }
+  }
+
+  async function refreshMatches() {
+    if (!matchingFor) return;
+    setLoadingMatches(true);
+    try {
+      const res = await fetch('/api/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'lost', id: matchingFor }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMatchCandidates(data.data);
+        showToast('Matches refreshed', 'success');
+        if (data.data.length === 0) {
+          showToast('No potential matches found', 'info');
+        }
+      } else {
+        showToast(data.error || 'Failed to refresh matches', 'error');
+      }
+    } catch {
+      showToast('Failed to refresh matches', 'error');
+    } finally {
+      setLoadingMatches(false);
     }
   }
 
@@ -457,21 +490,47 @@ export default function AdminItemsPage() {
         {/* Match Modal */}
         {matchingFor && !compareView && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4 z-50">
-            <div className="bg-white border border-gray-200 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900">Potential Matches</h2>
-                <p className="text-gray-600 mt-1">Showing best matching found items</p>
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Potential Matches</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">Showing best matching found items</p>
+                  </div>
+                  <button
+                    onClick={refreshMatches}
+                    disabled={loadingMatches}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-2"
+                    title="Refresh matches"
+                  >
+                    <svg className={`w-4 h-4 ${loadingMatches ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </button>
+                </div>
               </div>
               <div className="p-6 overflow-y-auto flex-1">
-                {matchCandidates.length === 0 ? (
+                {loadingMatches ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600 dark:text-gray-400">Searching for matches...</p>
+                  </div>
+                ) : matchCandidates.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">🔍</div>
-                    <p className="text-gray-600">No matching items found</p>
+                    <p className="text-gray-600 dark:text-gray-400">No matching items found</p>
+                    <button
+                      onClick={refreshMatches}
+                      className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Try again
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {matchCandidates.map((candidate) => (
-                      <div key={candidate.item.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div key={candidate.item.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                         <div className="flex gap-4">
                           {candidate.item.imageUrl && (
                             <div className="relative w-24 h-24 flex-shrink-0">
@@ -487,22 +546,22 @@ export default function AdminItemsPage() {
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">
                               <div>
-                                <h3 className="font-semibold text-gray-900">{candidate.item.title}</h3>
-                                <p className="text-sm text-gray-600 mt-1">{candidate.item.description}</p>
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">{candidate.item.title}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{candidate.item.description}</p>
                               </div>
-                              <div className="text-right ml-4">
-                                <div className="text-2xl font-bold text-blue-600">{candidate.score}%</div>
-                                <div className="text-xs text-gray-500">Match Score</div>
+                              <div className="text-right ml-4 flex-shrink-0">
+                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{candidate.score.toFixed(1)}%</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Match Score</div>
                               </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
+                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
                               <div>Category: <span className="capitalize">{candidate.item.category}</span></div>
                               <div>Location: {candidate.item.location}</div>
                               <div>Contact: {candidate.item.contactInfo}</div>
                             </div>
                             <div className="flex flex-wrap gap-2 text-xs mb-3">
                               {Object.entries(candidate.breakdown).map(([key, value]) => (
-                                <span key={key} className="px-2 py-1 bg-gray-100 rounded">
+                                <span key={key} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-700 dark:text-gray-300">
                                   {key.replace(/([A-Z])/g, ' $1').trim()}: {value.toFixed(1)}
                                 </span>
                               ))}
@@ -523,10 +582,10 @@ export default function AdminItemsPage() {
                   </div>
                 )}
               </div>
-              <div className="p-6 border-t border-gray-200">
+              <div className="p-6 border-t border-gray-200 dark:border-gray-800">
                 <button
                   onClick={() => setMatchingFor(null)}
-                  className="w-full px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  className="w-full px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
                 >
                   Close
                 </button>

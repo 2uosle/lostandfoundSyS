@@ -54,19 +54,6 @@ export default function Navigation() {
               </Link>
             )}
 
-            {session?.user && (
-              <Link
-                href="/donate"
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                  isActive('/donate')
-                    ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
-                }`}
-              >
-                Donate Item
-              </Link>
-            )}
-
             {isAdmin && (
               <Link
                 href="/admin/dashboard"
@@ -165,18 +152,6 @@ export default function Navigation() {
               }`}
             >
               My Items
-            </Link>
-          )}
-          {session?.user && (
-            <Link
-              href="/donate"
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                isActive('/donate')
-                    ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
-              }`}
-            >
-              Donate Item
             </Link>
           )}
           {isAdmin && (
