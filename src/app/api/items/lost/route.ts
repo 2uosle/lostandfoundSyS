@@ -131,11 +131,9 @@ export async function GET(req: Request) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
     const skip = (page - 1) * limit;
 
-    // Admins see all items, regular users see ONLY their own items
-    // This ensures each user's lost items are private and unique to them
-    const whereClause = session.user.role === 'ADMIN' 
-      ? {} 
-      : { userId: session.user.id };
+    // Personal dashboard: ALL users (including admins) see ONLY their own items
+    // Admin panel has separate endpoints to see all items
+    const whereClause = { userId: session.user.id };
 
     const [items, total] = await Promise.all([
       prisma.lostItem.findMany({
