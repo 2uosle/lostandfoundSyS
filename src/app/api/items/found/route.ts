@@ -76,13 +76,13 @@ export async function POST(req: Request) {
         },
       });
 
-      // Create notification for the admin
+      // Create notification for the admin/finder
       await tx.notification.create({
         data: {
           userId: validatedItem.userId!,
           type: 'ITEM_REPORTED',
           title: 'Found Item Reported',
-          message: `Found item "${validatedItem.title}" has been successfully reported. We'll check for potential matches.`,
+          message: `Found item "${validatedItem.title}" has been successfully reported to the system.`,
           itemId: createdItem.id,
           itemType: 'FOUND',
         },
