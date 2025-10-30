@@ -5,7 +5,6 @@ import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
-import SoundToggle from './SoundToggle';
 
 export default function Navigation() {
   const { data: session, status } = useSession();
@@ -90,11 +89,6 @@ export default function Navigation() {
                 <NotificationBell />
               </div>
             )}
-            
-            {/* Sound toggle */}
-            <div className="flex-shrink-0">
-              <SoundToggle />
-            </div>
             
             {/* Theme toggle */}
             <div className="flex-shrink-0">
