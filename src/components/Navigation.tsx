@@ -96,17 +96,25 @@ export default function Navigation() {
           </div>
 
           {/* Auth Section (right aligned) */}
-          <div className="ml-auto flex items-center space-x-3">
+          <div className="ml-auto flex items-center gap-2">
             {/* Notification Bell - Only show for logged-in users */}
-            {session?.user && <NotificationBell />}
+            {session?.user && (
+              <div className="flex-shrink-0">
+                <NotificationBell />
+              </div>
+            )}
+            
             {/* Theme toggle */}
-            <ThemeToggle />
+            <div className="flex-shrink-0">
+              <ThemeToggle />
+            </div>
             
             {status === 'loading' ? (
-              <div className="w-20 h-9 bg-gray-200 animate-pulse rounded-lg"></div>
+              <div className="w-20 h-9 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg flex-shrink-0"></div>
             ) : session?.user ? (
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-700 dark:text-gray-200 hidden sm:inline font-medium">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700 dark:text-gray-200 
+                               hidden lg:inline font-medium truncate max-w-[200px]">
                   {session.user.email}
                 </span>
                 <button
@@ -114,17 +122,19 @@ export default function Navigation() {
                   className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200
                            hover:text-gray-900 dark:hover:text-white
                            border border-gray-300 dark:border-gray-700 rounded-lg 
-                           hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                           hover:bg-gray-50 dark:hover:bg-gray-800 transition-all
+                           whitespace-nowrap flex-shrink-0"
                 >
                   Sign Out
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <Link
                   href="/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200
-                           hover:text-gray-900 dark:hover:text-white transition-colors"
+                           hover:text-gray-900 dark:hover:text-white transition-colors
+                           whitespace-nowrap"
                 >
                   Sign In
                 </Link>
@@ -133,7 +143,8 @@ export default function Navigation() {
                   className="px-4 py-2 text-sm font-medium text-white 
                            bg-gradient-to-r from-blue-600 to-blue-700
                            hover:from-blue-700 hover:to-blue-800
-                           rounded-lg transition-all shadow-sm hover:shadow-md"
+                           rounded-lg transition-all shadow-sm hover:shadow-md
+                           whitespace-nowrap flex-shrink-0"
                 >
                   Sign Up
                 </Link>
