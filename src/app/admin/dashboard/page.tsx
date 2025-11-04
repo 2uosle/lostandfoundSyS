@@ -17,6 +17,24 @@ export default async function AdminDashboard() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link
+            href="/admin/items"
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-800 border-l-4 border-l-blue-600"
+          >
+            <div className="text-4xl mb-3">📦</div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Manage Lost Items</h2>
+            <p className="text-gray-600 dark:text-gray-400">View and manage reported lost items</p>
+          </Link>
+
+          <Link
+            href="/admin/found-items"
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-800 border-l-4 border-l-green-600"
+          >
+            <div className="text-4xl mb-3">🔎</div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Manage Found Items</h2>
+            <p className="text-gray-600 dark:text-gray-400">View and manage reported found items</p>
+          </Link>
+
+          <Link
             href="/admin/disposition"
             className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-800 border-l-4 border-l-teal-600"
           >
@@ -24,21 +42,14 @@ export default async function AdminDashboard() {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Disposition</h2>
             <p className="text-gray-600 dark:text-gray-400">View donated and disposed items</p>
           </Link>
+
           <Link
             href="/found"
-            className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-800 border-l-4 border-l-green-600"
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-800 border-l-4 border-l-orange-600"
           >
             <div className="text-4xl mb-3">🧾</div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Report Found Item</h2>
             <p className="text-gray-600 dark:text-gray-400">Create a new found item report</p>
-          </Link>
-          <Link
-            href="/admin/items"
-            className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-800 border-l-4 border-l-blue-600"
-          >
-            <div className="text-4xl mb-3">📦</div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Manage Items</h2>
-            <p className="text-gray-600 dark:text-gray-400">View and manage all lost and found items</p>
           </Link>
 
           <Link

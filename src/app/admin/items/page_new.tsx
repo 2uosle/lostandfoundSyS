@@ -129,9 +129,11 @@ export default function AdminItemsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setMatchCandidates(data.data);
-        if (data.data.length === 0) {
-          showToast('No potential matches found', 'info');
+        const matches = Array.isArray(data.data) ? data.data : data.data.matches || [];
+        const candidateCount = Array.isArray(data.data) ? matches.length : data.data.candidateCount ?? matches.length;
+        setMatchCandidates(matches);
+        if (matches.length === 0) {
+          showToast(candidateCount === 0 ? 'No pending candidates available to check' : 'No potential matches found', 'info');
         }
       } else {
         showToast(data.error || 'Failed to find matches', 'error');

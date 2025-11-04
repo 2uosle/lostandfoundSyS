@@ -132,10 +132,8 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit;
 
     // Personal dashboard: ALL users (including admins) see ONLY their own items
-    // Admin panel has separate endpoints to see all items
-    const whereClause = { userId: session.user.id };
-
-    const [items, total] = await Promise.all([
+    // Admin panel pages use separate endpoints to see all items  
+    const whereClause = { userId: session.user.id };    const [items, total] = await Promise.all([
       prisma.lostItem.findMany({
         where: whereClause,
         orderBy: { createdAt: 'desc' },

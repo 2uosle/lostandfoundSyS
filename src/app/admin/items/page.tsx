@@ -101,7 +101,7 @@ export default function AdminItemsPage() {
   async function loadItems() {
     setLoading(true);
     try {
-      const res = await fetch('/api/items/lost');
+      const res = await fetch('/api/admin/items/lost');
       const data = await res.json();
       
       if (data.success) {
@@ -197,9 +197,12 @@ export default function AdminItemsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setMatchCandidates(data.data);
-        if (data.data.length === 0) {
-          showToast('No potential matches found', 'info');
+        // API may return { matches, candidateCount } for debugging or raw array for legacy.
+        const matches = Array.isArray(data.data) ? data.data : data.data.matches || [];
+        const candidateCount = Array.isArray(data.data) ? matches.length : data.data.candidateCount ?? matches.length;
+        setMatchCandidates(matches);
+        if (matches.length === 0) {
+          showToast(candidateCount === 0 ? 'No pending candidates available to check' : 'No potential matches found', 'info');
         }
       } else {
         showToast(data.error || 'Failed to find matches', 'error');
@@ -226,10 +229,12 @@ export default function AdminItemsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setMatchCandidates(data.data);
+        const matches = Array.isArray(data.data) ? data.data : data.data.matches || [];
+        const candidateCount = Array.isArray(data.data) ? matches.length : data.data.candidateCount ?? matches.length;
+        setMatchCandidates(matches);
         showToast('Matches refreshed', 'success');
-        if (data.data.length === 0) {
-          showToast('No potential matches found', 'info');
+        if (matches.length === 0) {
+          showToast(candidateCount === 0 ? 'No pending candidates available to check' : 'No potential matches found', 'info');
         }
       } else {
         showToast(data.error || 'Failed to refresh matches', 'error');
@@ -304,12 +309,13 @@ export default function AdminItemsPage() {
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Statuses</option>
+                <option value="LOST">Lost</option>
+                <option value="IN_STORAGE">In Storage</option>
                 <option value="PENDING">Pending</option>
                 <option value="MATCHED">Matched</option>
                 <option value="CLAIMED">Claimed</option>
-                <option value="ARCHIVED">Archived</option>
-                 <option value="DONATED">Donated</option>
-                 <option value="DISPOSED">Disposed</option>
+                <option value="DONATED">Donated</option>
+                <option value="DISPOSED">Disposed</option>
               </select>
             </div>
             <div>

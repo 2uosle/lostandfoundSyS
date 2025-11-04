@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { matchRequestSchema } from '@/lib/validations';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
 import { findMatchesForLostItem, findMatchesForFoundItem } from '@/lib/matching';
+import logger from '@/lib/logger';
 
 /**
  * POST /api/match
@@ -54,10 +55,13 @@ export async function POST(req: Request) {
         },
       });
 
+      // Log candidate count for debugging
+      logger.info({ type: 'match_request', mode: 'lost->found', lostItemId: lostItem.id, candidateCount: foundItems.length, sampleIds: foundItems.slice(0,5).map(f => f.id) }, 'Match search candidates');
+
       // Calculate match scores
       const matches = findMatchesForLostItem(lostItem, foundItems, 10, 20);
 
-      return successResponse(matches);
+      return successResponse({ matches, candidateCount: foundItems.length });
     } else {
       // Find matches for a found item
       const foundItem = await prisma.foundItem.findUnique({
@@ -97,10 +101,13 @@ export async function POST(req: Request) {
         },
       });
 
+      // Log candidate count for debugging
+      logger.info({ type: 'match_request', mode: 'found->lost', foundItemId: foundItem.id, candidateCount: lostItems.length, sampleIds: lostItems.slice(0,5).map(l => l.id) }, 'Match search candidates');
+
       // Calculate match scores
       const matches = findMatchesForFoundItem(foundItem, lostItems, 10, 20);
 
-      return successResponse(matches);
+      return successResponse({ matches, candidateCount: lostItems.length });
     }
   } catch (error) {
     return handleApiError(error);

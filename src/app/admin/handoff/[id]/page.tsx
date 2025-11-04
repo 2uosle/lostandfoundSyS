@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import { showToast } from '@/components/Toast';
 import { formatDistanceToNowStrict } from 'date-fns';
 
@@ -113,7 +114,19 @@ export default function AdminHandoffConsole() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+      <div className="max-w-3xl mx-auto">
+        {/* Back Button */}
+        <Link 
+          href="/admin/dashboard"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </Link>
+
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Admin Handoff Console</h1>
         <p className="text-gray-600 mb-6">Exchange codes with the owner to complete verification.</p>
 
@@ -194,6 +207,7 @@ export default function AdminHandoffConsole() {
           >
             Back to Items
           </button>
+        </div>
         </div>
       </div>
     </div>

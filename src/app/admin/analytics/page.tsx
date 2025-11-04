@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { showToast } from '@/components/Toast';
 import {
   LineChart,
@@ -190,6 +191,17 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <Link 
+          href="/admin/dashboard"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </Link>
+
         {/* Header */}
         <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
