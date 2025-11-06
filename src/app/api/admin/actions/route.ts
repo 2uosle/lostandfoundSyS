@@ -305,8 +305,14 @@ export async function POST(req: Request) {
           if (user?.email) {
             const dashboardUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`;
             
+            console.log('📧 Attempting to send match notification email...');
+            console.log('   Recipient:', user.email);
+            console.log('   User name:', user.name || 'there');
+            console.log('   Lost item:', lostItem.title);
+            console.log('   Found item:', foundItem.title);
+            
             // Send rich email notification
-            await sendMatchNotification({
+            const emailResult = await sendMatchNotification({
               userEmail: user.email,
               userName: user.name || 'there',
               lostItemTitle: lostItem.title,
@@ -316,7 +322,17 @@ export async function POST(req: Request) {
               matchScore: Math.round(matchScore.score),
               dashboardUrl,
             });
+            
+            if (emailResult.sent) {
+              console.log('✅ Email sent successfully!');
+            } else {
+              console.error('❌ Email failed to send. Reason:', emailResult.reason);
+            }
+          } else {
+            console.warn('⚠️  No email address found for user:', lostItem.userId);
           }
+        } else {
+          console.warn('⚠️  Lost item has no userId, skipping email notification');
         }
 
         return successResponse({ message: 'Items matched successfully' });

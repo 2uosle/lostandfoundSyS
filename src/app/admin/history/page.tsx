@@ -43,7 +43,9 @@ export default function AdminHistoryPage() {
   const [filterItemType, setFilterItemType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingMatch, setViewingMatch] = useState<{ lost: ItemDetails; found: ItemDetails } | null>(null);
+  const [viewingItem, setViewingItem] = useState<ItemDetails | null>(null);
   const [loadingMatch, setLoadingMatch] = useState(false);
+  const [loadingItem, setLoadingItem] = useState(false);
 
   useEffect(() => {
     loadLogs();
@@ -117,6 +119,10 @@ export default function AdminHistoryPage() {
       DELETE: { bg: 'bg-red-100', text: 'text-red-800', icon: '🗑️' },
       RESTORE: { bg: 'bg-purple-100', text: 'text-purple-800', icon: '↩️' },
       RESOLVE: { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '✨' },
+      DONATED: { bg: 'bg-teal-100', text: 'text-teal-800', icon: '🎁' },
+      DISPOSED: { bg: 'bg-orange-100', text: 'text-orange-800', icon: '♻️' },
+      IN_STORAGE: { bg: 'bg-cyan-100', text: 'text-cyan-800', icon: '📦' },
+      LOST: { bg: 'bg-gray-100', text: 'text-gray-800', icon: '🔍' },
     };
 
     const badge = badges[action] || badges.ARCHIVE;
@@ -204,6 +210,50 @@ export default function AdminHistoryPage() {
       showToast('Failed to load item details', 'error');
     } finally {
       setLoadingMatch(false);
+    }
+  }
+
+  // Load single item details for viewing
+  async function loadItemDetails(log: ActivityLog) {
+    setLoadingItem(true);
+    try {
+      // Fetch the appropriate item type
+      const endpoint = log.itemType === 'LOST' ? '/api/items/lost' : '/api/items/found';
+      const res = await fetch(endpoint);
+      const data = await res.json();
+
+      if (!data.success) {
+        showToast('Failed to load item details', 'error');
+        return;
+      }
+
+      // Find the specific item
+      const item = data.data.items.find((item: any) => item.id === log.itemId);
+      
+      if (!item) {
+        showToast('Item not found', 'error');
+        return;
+      }
+
+      // Map to ItemDetails format
+      const itemDetails: ItemDetails = {
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        category: item.category,
+        location: item.location,
+        date: log.itemType === 'LOST' ? item.lostDate : item.foundDate,
+        imageUrl: item.imageUrl,
+        contactInfo: item.contactInfo,
+        status: item.status,
+        reportedBy: item.reportedBy,
+      };
+
+      setViewingItem(itemDetails);
+    } catch {
+      showToast('Failed to load item details', 'error');
+    } finally {
+      setLoadingItem(false);
     }
   }
 
@@ -342,14 +392,17 @@ export default function AdminHistoryPage() {
                     const details = parseDetails(log.details);
                     const hasMatch = details && details.matchedWith;
                     const isMatchAction = log.action === 'MATCH' || log.action === 'RESOLVE';
+                    const isClickable = isMatchAction && hasMatch || ['CLAIM', 'DELETE', 'DONATED', 'DISPOSED', 'IN_STORAGE', 'LOST', 'ARCHIVE', 'RESTORE'].includes(log.action);
                     
                     return (
                       <tr 
                         key={log.id} 
-                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${hasMatch && isMatchAction ? 'cursor-pointer' : ''}`}
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${isClickable ? 'cursor-pointer' : ''}`}
                         onClick={() => {
                           if (hasMatch && isMatchAction) {
                             loadMatchedItems(log);
+                          } else if (isClickable) {
+                            loadItemDetails(log);
                           }
                         }}
                       >
@@ -373,7 +426,12 @@ export default function AdminHistoryPage() {
                             </div>
                           ) : (
                             <div>
-                              <div className="font-medium">{log.itemTitle}</div>
+                              <div className="font-medium flex items-center gap-2">
+                                {log.itemTitle}
+                                {isClickable && (
+                                  <span className="text-xs text-blue-600 dark:text-blue-400">👁️ Click to view</span>
+                                )}
+                              </div>
                               <div className="text-xs text-gray-500 dark:text-gray-400">ID: {log.itemId.slice(0, 8)}...</div>
                             </div>
                           )}
@@ -586,12 +644,125 @@ export default function AdminHistoryPage() {
           </div>
         )}
 
+        {/* Single Item Details Modal */}
+        {viewingItem && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4 z-50">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Item Details</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">Full information about this item</p>
+                  </div>
+                  <button
+                    onClick={() => setViewingItem(null)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 overflow-y-auto flex-1">
+                <div className="space-y-4">
+                  {/* Item Image */}
+                  {viewingItem.imageUrl && (
+                    <div className="relative w-full h-64 rounded-lg overflow-hidden mb-4">
+                      <Image
+                        src={viewingItem.imageUrl}
+                        alt={viewingItem.title}
+                        fill
+                        sizes="100vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{viewingItem.title}</h3>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      viewingItem.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                      viewingItem.status === 'MATCHED' ? 'bg-blue-100 text-blue-800' :
+                      viewingItem.status === 'CLAIMED' ? 'bg-green-100 text-green-800' :
+                      viewingItem.status === 'RESOLVED' ? 'bg-purple-100 text-purple-800' :
+                      viewingItem.status === 'DONATED' ? 'bg-teal-100 text-teal-800' :
+                      viewingItem.status === 'DISPOSED' ? 'bg-orange-100 text-orange-800' :
+                      viewingItem.status === 'IN_STORAGE' ? 'bg-cyan-100 text-cyan-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {viewingItem.status}
+                    </span>
+                  </div>
+
+                  {/* Item Details */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Description:</label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{viewingItem.description}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Category:</label>
+                        <p className="text-gray-900 dark:text-gray-100 mt-1 capitalize">{viewingItem.category}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Location:</label>
+                        <p className="text-gray-900 dark:text-gray-100 mt-1">{viewingItem.location || 'Not specified'}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Date:</label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{format(new Date(viewingItem.date), 'MMMM dd, yyyy')}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Contact Information:</label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{viewingItem.contactInfo}</p>
+                    </div>
+
+                    {viewingItem.reportedBy && (
+                      <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Reported By:</label>
+                        <p className="text-gray-900 dark:text-gray-100 mt-1">
+                          {viewingItem.reportedBy.name || 'Anonymous'}
+                        </p>
+                        {viewingItem.reportedBy.email && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{viewingItem.reportedBy.email}</p>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Item ID:</label>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 font-mono">{viewingItem.id}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 border-t border-gray-200 dark:border-gray-800">
+                <button
+                  onClick={() => setViewingItem(null)}
+                  className="w-full px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Loading Overlay */}
-        {loadingMatch && (
+        {(loadingMatch || loadingItem) && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
             <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
               <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-900 dark:text-gray-100 font-medium">Loading match details...</p>
+              <p className="text-gray-900 dark:text-gray-100 font-medium">
+                {loadingMatch ? 'Loading match details...' : 'Loading item details...'}
+              </p>
             </div>
           </div>
         )}

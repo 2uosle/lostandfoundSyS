@@ -37,15 +37,25 @@ export async function sendEmail({ to, subject, html, text }: MailOptions): Promi
 
   if (!tx) {
     // Fallback: log to server console
-    console.warn('[email] SMTP not configured. Skipping send.', { to, subject });
+    console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.warn('⚠️  EMAIL NOT SENT - SMTP NOT CONFIGURED');
+    console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.warn('To:', to);
+    console.warn('Subject:', subject);
+    console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.warn('📝 To enable email notifications:');
+    console.warn('1. Add SMTP credentials to your .env file');
+    console.warn('2. See EMAIL_SETUP.md for instructions');
+    console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     return { sent: false, reason: 'SMTP_NOT_CONFIGURED' };
   }
 
   try {
     const info = await tx.sendMail({ from, to, subject, html, text });
+    console.log('✅ Email sent successfully to:', to);
     return { sent: true, info };
   } catch (err) {
-    console.error('[email] Failed to send', err);
+    console.error('❌ Failed to send email:', err);
     return { sent: false, reason: (err as Error).message };
   }
 }

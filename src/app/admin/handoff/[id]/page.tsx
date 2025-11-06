@@ -97,10 +97,10 @@ export default function AdminHandoffConsole() {
 
   if (status === 'loading' || initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading handoff console...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading handoff console...</p>
         </div>
       </div>
     );
@@ -113,12 +113,12 @@ export default function AdminHandoffConsole() {
   const expired = info.status === 'EXPIRED';
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Back Button */}
         <Link 
           href="/admin/dashboard"
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mb-6 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -126,88 +126,98 @@ export default function AdminHandoffConsole() {
           Back to Dashboard
         </Link>
 
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Admin Handoff Console</h1>
-        <p className="text-gray-600 mb-6">Exchange codes with the owner to complete verification.</p>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm p-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Admin Handoff Console</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Exchange codes with the owner to complete verification.</p>
 
-        {/* Admin's Code Display */}
-        <div className="mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg">
-          <h3 className="text-sm font-semibold text-purple-900 mb-2">🔐 Your Admin Code</h3>
-          <div className="text-3xl font-mono tracking-widest bg-white rounded-lg p-4 text-center select-all border-2 border-purple-300 text-gray-900">
-            {info.adminCode}
-          </div>
-          <p className="text-xs text-purple-700 mt-2">Share this code with the owner to verify their identity.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className={`p-4 rounded-lg border ${info.ownerVerifiedAdmin && info.adminVerifiedOwner ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-            <div className="text-sm text-gray-700 font-medium mb-1">Owner</div>
-            <div className="text-lg font-semibold text-gray-900">
-              {info.ownerVerifiedAdmin && info.adminVerifiedOwner ? 'Verified' : 'Pending'}
+          {/* Admin's Code Display */}
+          <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-lg">
+            <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200 mb-2">🔐 Your Admin Code</h3>
+            <div className="text-3xl font-mono tracking-widest bg-white dark:bg-gray-800 rounded-lg p-4 text-center select-all border-2 border-purple-300 dark:border-purple-700 text-gray-900 dark:text-gray-100">
+              {info.adminCode}
             </div>
-            {info.ownerVerifiedAdmin && !info.adminVerifiedOwner && (
-              <div className="text-xs text-blue-600 mt-1">✓ Entered your code</div>
-            )}
-            {!info.ownerVerifiedAdmin && info.adminVerifiedOwner && (
-              <div className="text-xs text-blue-600 mt-1">✓ You verified them</div>
-            )}
+            <p className="text-xs text-purple-700 dark:text-purple-300 mt-2">Share this code with the owner to verify their identity.</p>
           </div>
-          <div className="p-4 rounded-lg border bg-gray-50 border-gray-200">
-            <div className="text-sm text-gray-700 font-medium mb-1">Expires</div>
-            <div className="text-lg font-semibold text-gray-900">{expiresLabel}</div>
-          </div>
-        </div>
 
-        {!done && !expired && !info.locked && (
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Enter Owner&apos;s presented code</label>
-            <input
-              type="text" inputMode="numeric" pattern="[0-9]*" value={ownerInput}
-              onChange={(e) => setOwnerInput(e.target.value.replace(/\D/g, '').slice(0,6))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest"
-              placeholder="6-digit code"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className={`p-4 rounded-lg border ${info.ownerVerifiedAdmin && info.adminVerifiedOwner ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+              <div className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">Status</div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {info.ownerVerifiedAdmin && info.adminVerifiedOwner ? '✓ Both Verified' : 'In Progress'}
+              </div>
+            </div>
+            <div className="p-4 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">Expires</div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{expiresLabel}</div>
+            </div>
+          </div>
+
+          {!done && !expired && !info.locked && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Enter Owner&apos;s presented code</label>
+              <input
+                type="text" inputMode="numeric" pattern="[0-9]*" value={ownerInput}
+                onChange={(e) => setOwnerInput(e.target.value.replace(/\D/g, '').slice(0,6))}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest"
+                placeholder="6-digit code"
+              />
+              <button
+                onClick={() => submit(ownerInput)}
+                disabled={submitting !== null || ownerInput.length !== 6}
+                className={`mt-3 w-full px-4 py-2 rounded-lg font-medium text-sm transition-all ${submitting || ownerInput.length !== 6 ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+              >
+                {submitting === 'OWNER' ? 'Verifying…' : 'Verify Owner'}
+              </button>
+            </div>
+          )}
+
+          {info.locked && (
+            <div className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-center mb-3">
+              <div className="text-red-700 dark:text-red-300 text-sm">Session locked: too many attempts. Use Reset.</div>
+            </div>
+          )}
+
+          {done && (
+            <div className="w-full px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center mb-3">
+              <div className="text-green-700 dark:text-green-300 font-semibold">✓ Handoff Complete! Both parties verified.</div>
+            </div>
+          )}
+
+          {/* Verification Status Grid */}
+          <div className="grid grid-cols-2 gap-3 text-sm mb-6">
+            <div className={`p-3 rounded-lg border ${info.ownerVerifiedAdmin ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+              <div className="font-medium text-gray-700 dark:text-gray-300">Owner Entered Your Code</div>
+              <div className={`${info.ownerVerifiedAdmin ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                {info.ownerVerifiedAdmin ? '✓ Verified' : 'Pending'}
+              </div>
+            </div>
+            <div className={`p-3 rounded-lg border ${info.adminVerifiedOwner ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+              <div className="font-medium text-gray-700 dark:text-gray-300">You Entered Owner Code</div>
+              <div className={`${info.adminVerifiedOwner ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                {info.adminVerifiedOwner ? '✓ Verified' : 'Pending'}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
             <button
-              onClick={() => submit(ownerInput)}
-              disabled={submitting !== null || ownerInput.length !== 6}
-              className={`mt-3 w-full px-4 py-2 rounded-lg font-medium text-sm transition-all ${submitting || ownerInput.length !== 6 ? 'bg-gray-300 text-gray-500' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+              onClick={async () => {
+                const res = await fetch(`/api/admin/handoff/${id}/reset`, { method: 'POST' });
+                const data = await res.json();
+                if (res.ok && data.success) { showToast('Session reset', 'success'); load(); }
+                else showToast(data.error || 'Failed to reset', 'error');
+              }}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
             >
-              {submitting === 'OWNER' ? 'Verifying…' : 'Verify Owner'}
+              Reset Codes
+            </button>
+            <button
+              onClick={() => router.push('/admin/items')}
+              className="px-4 py-2 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+            >
+              Back to Items
             </button>
           </div>
-        )}
-
-        {info.locked && (
-          <div className="w-full px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-center mb-3">
-            <div className="text-red-700 text-sm">Session locked: too many attempts. Use Reset.</div>
-          </div>
-        )}
-
-        {done && (
-          <div className="w-full px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-center mb-3">
-            <div className="text-green-700 font-semibold">✓ Handoff Complete! Both parties verified.</div>
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          <button
-            onClick={async () => {
-              const res = await fetch(`/api/admin/handoff/${id}/reset`, { method: 'POST' });
-              const data = await res.json();
-              if (res.ok && data.success) { showToast('Session reset', 'success'); load(); }
-              else showToast(data.error || 'Failed to reset', 'error');
-            }}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-          >
-            Reset Codes
-          </button>
-          <button
-            onClick={() => router.push('/admin/items')}
-            className="px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-          >
-            Back to Items
-          </button>
-        </div>
         </div>
       </div>
     </div>
