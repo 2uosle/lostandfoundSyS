@@ -13,7 +13,7 @@
     "test:matching": "ts-node ./scripts/test-matching.ts",
     "test:rate-limit": "ts-node ./scripts/test-rate-limit.ts",
     "e2e": "playwright test",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint"
