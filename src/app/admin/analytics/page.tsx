@@ -285,7 +285,11 @@ export default function AnalyticsPage() {
                   All reported lost items
                 </p>
               </div>
-              <div className="text-4xl">📢</div>
+              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <svg className="w-10 h-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -300,7 +304,11 @@ export default function AnalyticsPage() {
                   Items found by community
                 </p>
               </div>
-              <div className="text-4xl">✨</div>
+              <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                <svg className="w-10 h-10 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -315,7 +323,11 @@ export default function AnalyticsPage() {
                   Matched + resolved items
                 </p>
               </div>
-              <div className="text-4xl">🎯</div>
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -330,7 +342,11 @@ export default function AnalyticsPage() {
                   Items successfully matched & claimed
                 </p>
               </div>
-              <div className="text-4xl">🤝</div>
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -345,7 +361,11 @@ export default function AnalyticsPage() {
                   Items marked as resolved
                 </p>
               </div>
-              <div className="text-4xl">✅</div>
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                <svg className="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -360,7 +380,11 @@ export default function AnalyticsPage() {
                   Users with recent activity
                 </p>
               </div>
-              <div className="text-4xl">👥</div>
+              <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+                <svg className="w-10 h-10 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>

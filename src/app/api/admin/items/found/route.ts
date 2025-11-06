@@ -38,6 +38,11 @@ export async function GET(req: Request) {
           imageUrl: true,
           contactInfo: true,
           createdAt: true,
+          // Student turnin info
+          turnedInByName: true,
+          turnedInByStudentNumber: true,
+          turnedInByContact: true,
+          turnedInByDepartment: true,
           reportedBy: {
             select: {
               name: true,

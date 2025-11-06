@@ -19,8 +19,14 @@ type FormData = {
   date: string;
   category: string;
   contactInfo: string;
+  mobileNumber?: string; // Optional mobile number for lost items
   image: string | null;
   imageFile: File | null;
+  // Student who turned in the item (for found items only)
+  turnedInByName?: string;
+  turnedInByStudentNumber?: string;
+  turnedInByContact?: string;
+  turnedInByDepartment?: string;
 };
 
 export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps) {
@@ -96,8 +102,14 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
       date: formDataObj.get('date') as string,
       category: formDataObj.get('category') as string,
       contactInfo: formDataObj.get('contactInfo') as string,
+      mobileNumber: formDataObj.get('mobileNumber') as string || undefined,
       image: imageBase64,
       imageFile: file && file.size > 0 ? file : null,
+      // Student turnin info (found items only)
+      turnedInByName: formDataObj.get('turnedInByName') as string || undefined,
+      turnedInByStudentNumber: formDataObj.get('turnedInByStudentNumber') as string || undefined,
+      turnedInByContact: formDataObj.get('turnedInByContact') as string || undefined,
+      turnedInByDepartment: formDataObj.get('turnedInByDepartment') as string || undefined,
     };
 
     setFormData(data);
@@ -117,7 +129,13 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
       date: formData.date,
       category: formData.category,
       contactInfo: formData.contactInfo,
+      mobileNumber: formData.mobileNumber,
       image: formData.image,
+      // Student turnin info (found items only)
+      turnedInByName: formData.turnedInByName,
+      turnedInByStudentNumber: formData.turnedInByStudentNumber,
+      turnedInByContact: formData.turnedInByContact,
+      turnedInByDepartment: formData.turnedInByDepartment,
     };
 
     try {
@@ -344,6 +362,109 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
               </div>
             </div>
             
+            {/* Student Turnin Information - Only for found items */}
+            {!isLost && (
+              <div className="space-y-6 p-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10 rounded-xl border-2 border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                    Student Who Turned In Item
+                  </h3>
+                </div>
+                <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+                  Information about the student who physically brought this item to OSAS
+                </p>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="group">
+                    <label htmlFor="turnedInByName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Student Name
+                    </label>
+                    <input
+                      type="text"
+                      name="turnedInByName"
+                      id="turnedInByName"
+                      maxLength={100}
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                                border border-gray-300 dark:border-gray-700 rounded-xl
+                                text-gray-900 dark:text-gray-100
+                                placeholder:text-gray-500 dark:placeholder:text-gray-400
+                                focus:ring-2 focus:ring-purple-500/50 
+                                focus:border-purple-500
+                                hover:border-gray-400 dark:hover:border-gray-600
+                                transition-all duration-200"
+                      placeholder="e.g., Juan Dela Cruz"
+                    />
+                  </div>
+
+                  <div className="group">
+                    <label htmlFor="turnedInByStudentNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Student Number
+                    </label>
+                    <input
+                      type="text"
+                      name="turnedInByStudentNumber"
+                      id="turnedInByStudentNumber"
+                      maxLength={50}
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                                border border-gray-300 dark:border-gray-700 rounded-xl
+                                text-gray-900 dark:text-gray-100
+                                placeholder:text-gray-500 dark:placeholder:text-gray-400
+                                focus:ring-2 focus:ring-purple-500/50 
+                                focus:border-purple-500
+                                hover:border-gray-400 dark:hover:border-gray-600
+                                transition-all duration-200"
+                      placeholder="e.g., 2021-12345"
+                    />
+                  </div>
+
+                  <div className="group">
+                    <label htmlFor="turnedInByContact" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Contact Info
+                    </label>
+                    <input
+                      type="text"
+                      name="turnedInByContact"
+                      id="turnedInByContact"
+                      maxLength={100}
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                                border border-gray-300 dark:border-gray-700 rounded-xl
+                                text-gray-900 dark:text-gray-100
+                                placeholder:text-gray-500 dark:placeholder:text-gray-400
+                                focus:ring-2 focus:ring-purple-500/50 
+                                focus:border-purple-500
+                                hover:border-gray-400 dark:hover:border-gray-600
+                                transition-all duration-200"
+                      placeholder="Email or phone number"
+                    />
+                  </div>
+
+                  <div className="group">
+                    <label htmlFor="turnedInByDepartment" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Department / Course
+                    </label>
+                    <input
+                      type="text"
+                      name="turnedInByDepartment"
+                      id="turnedInByDepartment"
+                      maxLength={100}
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                                border border-gray-300 dark:border-gray-700 rounded-xl
+                                text-gray-900 dark:text-gray-100
+                                placeholder:text-gray-500 dark:placeholder:text-gray-400
+                                focus:ring-2 focus:ring-purple-500/50 
+                                focus:border-purple-500
+                                hover:border-gray-400 dark:hover:border-gray-600
+                                transition-all duration-200"
+                      placeholder="e.g., BS Computer Science"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="group">
               <label htmlFor="contactInfo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Contact Information *
@@ -375,6 +496,41 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 📧 Your institutional email will be automatically recorded
               </p>
             </div>
+
+            {/* Mobile Number - Only for lost items */}
+            {isLost && (
+              <div className="group">
+                <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Mobile Number (optional)
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    name="mobileNumber"
+                    id="mobileNumber"
+                    maxLength={15}
+                    pattern="[0-9+\-\s()]+"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                              border border-gray-300 dark:border-gray-700 rounded-xl
+                              text-gray-900 dark:text-gray-100
+                              placeholder:text-gray-500 dark:placeholder:text-gray-400
+                              focus:ring-2 focus:ring-blue-500/50 
+                              focus:border-blue-500
+                              hover:border-gray-400 dark:hover:border-gray-600
+                              transition-all duration-200"
+                    placeholder="e.g., +63 912 345 6789"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  📱 We may contact you via SMS for urgent updates
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-4 pt-8">
@@ -511,16 +667,63 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                   </div>
                 </div>
 
+                {/* Student Turnin Info - Only for found items */}
+                {!isLost && (formData.turnedInByName || formData.turnedInByStudentNumber || formData.turnedInByContact || formData.turnedInByDepartment) && (
+                  <div className="animate-in slide-in-from-bottom duration-500 delay-275">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                      👤 Student Who Turned In Item
+                    </label>
+                    <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border-2 border-purple-200 dark:border-purple-800 space-y-2">
+                      {formData.turnedInByName && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Name:</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{formData.turnedInByName}</span>
+                        </div>
+                      )}
+                      {formData.turnedInByStudentNumber && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Student Number:</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{formData.turnedInByStudentNumber}</span>
+                        </div>
+                      )}
+                      {formData.turnedInByContact && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Contact:</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{formData.turnedInByContact}</span>
+                        </div>
+                      )}
+                      {formData.turnedInByDepartment && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Department/Course:</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{formData.turnedInByDepartment}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Contact Info */}
                 <div className="animate-in slide-in-from-bottom duration-500 delay-300">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    � Reported by
+                    📧 Reported by
                   </label>
                   <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
                     <p className="text-blue-900 dark:text-blue-100 font-semibold">{formData.contactInfo}</p>
                     <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Institutional Email (Auto-recorded)</p>
                   </div>
                 </div>
+
+                {/* Mobile Number - Only for lost items */}
+                {isLost && formData.mobileNumber && (
+                  <div className="animate-in slide-in-from-bottom duration-500 delay-325">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      📱 Mobile Number
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                      <p className="text-gray-900 dark:text-gray-100 font-medium">{formData.mobileNumber}</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Info Banner */}
                 <div className={`p-4 rounded-xl border-2 animate-in slide-in-from-bottom duration-500 delay-350

@@ -41,6 +41,9 @@ export async function POST(req: Request) {
       userId: session.user.id,
     });
 
+    // Extract optional mobile number
+    const mobileNumber = body.mobileNumber?.trim() || null;
+
     // Validate image if provided
     let validatedImageUrl: string | null = null;
     if (body.image) {
@@ -68,6 +71,7 @@ export async function POST(req: Request) {
           lostDate: validatedItem.lostDate,
           category: validatedItem.category,
           contactInfo: validatedItem.contactInfo,
+          mobileNumber,
           status: 'PENDING',
           userId: validatedItem.userId,
           imageUrl: validatedImageUrl,

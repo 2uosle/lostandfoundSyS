@@ -35,6 +35,7 @@ model LostItem {
   category      String
   location      String?
   contactInfo   String?
+  mobileNumber  String?
   lostDate      DateTime
   status        ItemStatus @default(PENDING)
   imageUrl      String?
@@ -51,20 +52,25 @@ model LostItem {
 }
 
 model FoundItem {
-  id          String     @id @default(cuid())
-  title       String
-  description String
-  category    String
-  location    String
-  contactInfo String?
-  foundDate   DateTime
-  status      ItemStatus @default(PENDING)
-  imageUrl    String?
-  reportedBy  User?      @relation(fields: [userId], references: [id])
-  userId      String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  matchedItem LostItem?  @relation("ItemMatch")
+  id                      String     @id @default(cuid())
+  title                   String
+  description             String
+  category                String
+  location                String
+  contactInfo             String?
+  foundDate               DateTime
+  status                  ItemStatus @default(PENDING)
+  imageUrl                String?
+  reportedBy              User?      @relation(fields: [userId], references: [id])
+  userId                  String?
+  // Student who turned in the item to OSAS
+  turnedInByName          String?
+  turnedInByStudentNumber String?
+  turnedInByContact       String?
+  turnedInByDepartment    String?
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+  matchedItem             LostItem?  @relation("ItemMatch")
 
   @@index([category, status])
   @@index([status, createdAt])

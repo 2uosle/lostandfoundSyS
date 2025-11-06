@@ -46,6 +46,12 @@ export async function POST(req: Request) {
       userId: session.user.id,
     });
 
+    // Extract student turnin information (optional)
+    const turnedInByName = body.turnedInByName?.trim() || null;
+    const turnedInByStudentNumber = body.turnedInByStudentNumber?.trim() || null;
+    const turnedInByContact = body.turnedInByContact?.trim() || null;
+    const turnedInByDepartment = body.turnedInByDepartment?.trim() || null;
+
     // Validate image
     imageUploadSchema.parse({ image: body.image });
     
@@ -73,6 +79,11 @@ export async function POST(req: Request) {
           status: 'PENDING',
           userId: validatedItem.userId,
           imageUrl: validatedImageUrl,
+          // Student who turned in the item
+          turnedInByName,
+          turnedInByStudentNumber,
+          turnedInByContact,
+          turnedInByDepartment,
         },
       });
 

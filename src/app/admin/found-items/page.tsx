@@ -21,6 +21,11 @@ type FoundItem = {
     name: string | null;
     email: string | null;
   };
+  // Student who turned in the item
+  turnedInByName?: string | null;
+  turnedInByStudentNumber?: string | null;
+  turnedInByContact?: string | null;
+  turnedInByDepartment?: string | null;
 };
 
 export default function AdminFoundItemsPage() {
@@ -218,6 +223,44 @@ export default function AdminFoundItemsPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Student Turnin Information */}
+                    {(item.turnedInByName || item.turnedInByStudentNumber || item.turnedInByContact || item.turnedInByDepartment) && (
+                      <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10 rounded-lg border border-purple-200 dark:border-purple-800">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span className="text-sm font-semibold text-purple-900 dark:text-purple-100">Student Who Turned In Item</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                          {item.turnedInByName && (
+                            <div>
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Name:</span>
+                              <span className="ml-2 text-gray-900 dark:text-gray-100">{item.turnedInByName}</span>
+                            </div>
+                          )}
+                          {item.turnedInByStudentNumber && (
+                            <div>
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Student #:</span>
+                              <span className="ml-2 text-gray-900 dark:text-gray-100">{item.turnedInByStudentNumber}</span>
+                            </div>
+                          )}
+                          {item.turnedInByContact && (
+                            <div>
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Contact:</span>
+                              <span className="ml-2 text-gray-900 dark:text-gray-100">{item.turnedInByContact}</span>
+                            </div>
+                          )}
+                          {item.turnedInByDepartment && (
+                            <div>
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Dept/Course:</span>
+                              <span className="ml-2 text-gray-900 dark:text-gray-100">{item.turnedInByDepartment}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex flex-wrap gap-2">
                       <button onClick={() => openMatchModal(item.id)} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Find Matches</button>
