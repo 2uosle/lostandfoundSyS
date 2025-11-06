@@ -20,10 +20,33 @@ export async function GET(req: Request) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
     const skip = (page - 1) * limit;
+    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') || 'all';
+    const category = searchParams.get('category') || 'all';
 
-    // Admin panel: show ALL lost items
+    // Build filter conditions
+    const where: any = {};
+    
+    if (status !== 'all') {
+      where.status = status;
+    }
+    
+    if (category !== 'all') {
+      where.category = category;
+    }
+    
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Admin panel: show ALL lost items with filters
     const [items, total] = await Promise.all([
       prisma.lostItem.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -46,7 +69,7 @@ export async function GET(req: Request) {
           },
         },
       }),
-      prisma.lostItem.count(),
+      prisma.lostItem.count({ where }),
     ]);
 
     return successResponse({

@@ -46,22 +46,30 @@ export async function POST(req: Request) {
           foundDate: true,
           imageUrl: true,
           contactInfo: true,
-          reportedBy: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
+          turnedInByName: true,
+          turnedInByStudentNumber: true,
+          turnedInByContact: true,
+          turnedInByDepartment: true,
         },
       });
 
+      // Get declined matches for this lost item
+      const declinedMatches = await prisma.declinedMatch.findMany({
+        where: { lostItemId: lostItem.id },
+        select: { foundItemId: true },
+      });
+      const declinedFoundItemIds = new Set(declinedMatches.map(dm => dm.foundItemId));
+
+      // Filter out declined matches
+      const filteredFoundItems = foundItems.filter(item => !declinedFoundItemIds.has(item.id));
+
       // Log candidate count for debugging
-      logger.info({ type: 'match_request', mode: 'lost->found', lostItemId: lostItem.id, candidateCount: foundItems.length, sampleIds: foundItems.slice(0,5).map(f => f.id) }, 'Match search candidates');
+      logger.info({ type: 'match_request', mode: 'lost->found', lostItemId: lostItem.id, candidateCount: filteredFoundItems.length, declinedCount: declinedFoundItemIds.size, sampleIds: filteredFoundItems.slice(0,5).map(f => f.id) }, 'Match search candidates');
 
       // Calculate match scores
-      const matches = findMatchesForLostItem(lostItem, foundItems, 10, 20);
+      const matches = findMatchesForLostItem(lostItem, filteredFoundItems, 10, 20);
 
-      return successResponse({ matches, candidateCount: foundItems.length });
+      return successResponse({ matches, candidateCount: filteredFoundItems.length });
     } else {
       // Find matches for a found item
       const foundItem = await prisma.foundItem.findUnique({
@@ -101,13 +109,29 @@ export async function POST(req: Request) {
         },
       });
 
+      // Get declined matches for this found item
+      const declinedMatches = await prisma.declinedMatch.findMany({
+        where: { foundItemId: foundItem.id },
+        select: { lostItemId: true },
+      });
+      const declinedLostItemIds = new Set(declinedMatches.map(dm => dm.lostItemId));
+
+      // Filter out declined matches
+      const filteredLostItems = lostItems.filter(item => !declinedLostItemIds.has(item.id));
+
       // Log candidate count for debugging
-      logger.info({ type: 'match_request', mode: 'found->lost', foundItemId: foundItem.id, candidateCount: lostItems.length, sampleIds: lostItems.slice(0,5).map(l => l.id) }, 'Match search candidates');
+      logger.info({ type: 'match_request', mode: 'found->lost', foundItemId: foundItem.id, candidateCount: filteredLostItems.length, declinedCount: declinedLostItemIds.size, sampleIds: filteredLostItems.slice(0,5).map(l => l.id) }, 'Match search candidates');
+      console.log(`[MATCH DEBUG] Found ${lostItems.length} PENDING lost items, ${declinedLostItemIds.size} declined, ${filteredLostItems.length} after filtering`);
+      console.log('[MATCH DEBUG] Found item:', foundItem);
+      console.log('[MATCH DEBUG] Sample lost items:', filteredLostItems.slice(0, 2));
 
       // Calculate match scores
-      const matches = findMatchesForFoundItem(foundItem, lostItems, 10, 20);
+      const matches = findMatchesForFoundItem(foundItem, filteredLostItems, 10, 20);
+      
+      console.log(`[MATCH DEBUG] Calculated ${matches.length} matches above threshold`);
+      console.log('[MATCH DEBUG] Sample matches:', matches.slice(0, 2));
 
-      return successResponse({ matches, candidateCount: lostItems.length });
+      return successResponse({ matches, candidateCount: filteredLostItems.length });
     }
   } catch (error) {
     return handleApiError(error);

@@ -453,6 +453,44 @@ export async function POST(req: Request) {
         return successResponse({ message: 'Item marked as disposed' });
       }
 
+      case 'storage': {
+        // Mark found item as "In Storage" - ready for pickup/handoff
+        const item = await prisma.foundItem.findUnique({ 
+          where: { id: itemId }, 
+          select: { title: true, userId: true } 
+        });
+        
+        if (!item) return errorResponse('Item not found', 404);
+
+        await prisma.foundItem.update({ 
+          where: { id: itemId }, 
+          data: { status: 'IN_STORAGE' as any } 
+        });
+        
+        await logActivity(
+          session.user.id, 
+          'IN_STORAGE' as any, 
+          'FOUND', 
+          itemId, 
+          item.title
+        );
+
+        if (item.userId) {
+          await prisma.notification.create({
+            data: {
+              userId: item.userId,
+              type: 'ITEM_RESOLVED',
+              title: 'Item In Storage',
+              message: `The found item "${item.title}" has been moved to storage and is ready for handoff.`,
+              itemId,
+              itemType: 'FOUND',
+            },
+          });
+        }
+
+        return successResponse({ message: 'Item moved to storage' });
+      }
+
       default:
         return errorResponse('Unknown action', 400);
     }

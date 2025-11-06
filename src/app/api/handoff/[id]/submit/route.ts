@@ -80,14 +80,53 @@ export async function POST(req: Request, context: RouteContext) {
 
     // Check if handoff is complete (both owner and admin must verify each other)
     if (isHandoffComplete(updated)) {
-      const lost = await prisma.lostItem.findUnique({ where: { id: hs.lostItemId }, select: { id: true, title: true } });
+      // Update both lost and found items to CLAIMED
+      const lost = await prisma.lostItem.findUnique({ 
+        where: { id: hs.lostItemId }, 
+        select: { id: true, title: true } 
+      });
+      
+      const found = await prisma.foundItem.findUnique({ 
+        where: { id: hs.foundItemId }, 
+        select: { id: true, title: true } 
+      });
+      
       if (lost) {
-        await prisma.lostItem.update({ where: { id: lost.id }, data: { status: 'CLAIMED' as any } });
-        await logActivity($Enums.AdminAction.CLAIM, 'LOST', lost.id, lost.title, session.user.id, { handoffSessionId: hs.id, handoff: 'COMPLETE' });
+        await prisma.lostItem.update({ 
+          where: { id: lost.id }, 
+          data: { status: 'CLAIMED' as any } 
+        });
+        await logActivity(
+          $Enums.AdminAction.CLAIM, 
+          'LOST', 
+          lost.id, 
+          lost.title, 
+          session.user.id, 
+          { handoffSessionId: hs.id, handoff: 'COMPLETE' }
+        );
       }
-  await anyPrisma.handoffSession.update({ where: { id: hs.id }, data: { status: 'COMPLETED' as any } });
-  emitHandoffUpdate(hs.id);
-      return successResponse({ message: 'Admin code verified! Handoff complete - item marked as claimed.' });
+      
+      if (found) {
+        await prisma.foundItem.update({ 
+          where: { id: found.id }, 
+          data: { status: 'CLAIMED' as any } 
+        });
+        await logActivity(
+          $Enums.AdminAction.CLAIM, 
+          'FOUND', 
+          found.id, 
+          found.title, 
+          session.user.id, 
+          { handoffSessionId: hs.id, handoff: 'COMPLETE' }
+        );
+      }
+      
+      await anyPrisma.handoffSession.update({ 
+        where: { id: hs.id }, 
+        data: { status: 'COMPLETED' as any } 
+      });
+      emitHandoffUpdate(hs.id);
+      return successResponse({ message: 'Admin code verified! Handoff complete - items marked as claimed.' });
     }
 
     return successResponse({ message: 'Admin code verified! Waiting for admin to verify your code.' });

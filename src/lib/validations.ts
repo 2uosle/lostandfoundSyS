@@ -67,7 +67,7 @@ export const imageUploadSchema = z.object({
 
 // Admin actions validation
 export const adminActionSchema = z.object({
-  action: z.enum(['claim', 'archive', 'match', 'delete', 'donate', 'dispose', 'restore', 'handoff']),
+  action: z.enum(['claim', 'archive', 'match', 'delete', 'donate', 'dispose', 'restore', 'handoff', 'storage']),
   itemId: z.string().min(1, 'Item ID is required'),
   itemType: z.enum(['LOST', 'FOUND']).default('LOST'),
   matchWithId: z.string().optional(),
@@ -93,7 +93,7 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
   search: z.string().max(200).optional(),
   category: z.enum([...itemCategories, 'all']).default('all'),
-  status: z.enum(['PENDING', 'MATCHED', 'CLAIMED', 'ARCHIVED', 'DONATED', 'DISPOSED', 'all']).default('all'),
+  status: z.enum(['PENDING', 'MATCHED', 'CLAIMED', 'ARCHIVED', 'DONATED', 'DISPOSED', 'IN_STORAGE', 'all']).default('all'),
 });
 
 export type UserInput = z.infer<typeof userSchema>;

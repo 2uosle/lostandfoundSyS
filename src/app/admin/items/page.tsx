@@ -79,6 +79,12 @@ export default function AdminItemsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 5;
+  const [activeHandoffs, setActiveHandoffs] = useState<any[]>([]);
+  
+  // Match modal state (like found items page)
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [selectedLostItem, setSelectedLostItem] = useState<Item | null>(null);
+  const [modalCompareView, setModalCompareView] = useState<MatchCandidate | null>(null);
 
   function exportToCSV() {
     const headers = ['ID','Title','Description','Category','Location','LostDate','Status','Contact','CreatedAt','ReporterName','ReporterEmail'];
@@ -110,7 +116,16 @@ export default function AdminItemsPage() {
   async function loadItems() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/items/lost?page=${currentPage}&limit=${itemsPerPage}`);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+      });
+      
+      if (searchTerm) params.append('search', searchTerm);
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (categoryFilter !== 'all') params.append('category', categoryFilter);
+      
+      const res = await fetch(`/api/admin/items/lost?${params.toString()}`);
       const data = await res.json();
       
       if (data.success) {
@@ -129,6 +144,28 @@ export default function AdminItemsPage() {
     }
   }
 
+  async function loadActiveHandoffs() {
+    try {
+      const res = await fetch('/api/admin/handoff/active');
+      const data = await res.json();
+      if (data.success) {
+        setActiveHandoffs(data.data);
+      }
+    } catch {
+      // Silently fail - this is not critical
+    }
+  }
+
+  useEffect(() => {
+    // Reset to page 1 when filters change
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      loadItems();
+    }
+    loadActiveHandoffs();
+  }, [searchTerm, statusFilter, categoryFilter]);
+
   useEffect(() => {
     loadItems();
   }, [currentPage]);
@@ -137,7 +174,12 @@ export default function AdminItemsPage() {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
     try {
-      const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
+      // Use admin actions API to ensure activity logging
+      const res = await fetch('/api/admin/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', itemId: id, itemType: 'LOST' }),
+      });
       const data = await res.json();
 
       if (data.success) {
@@ -197,9 +239,14 @@ export default function AdminItemsPage() {
   }
 
   async function openMatchModal(id: string) {
-    setMatchingFor(id);
+    const lostItem = items.find(item => item.id === id);
+    if (!lostItem) return;
+
+    setSelectedLostItem(lostItem);
     setLoadingMatches(true);
+    setShowMatchModal(true);
     setMatchCandidates([]); // Clear previous matches
+    
     try {
       const res = await fetch('/api/match', {
         method: 'POST',
@@ -216,14 +263,16 @@ export default function AdminItemsPage() {
         setMatchCandidates(matches);
         if (matches.length === 0) {
           showToast(candidateCount === 0 ? 'No pending candidates available to check' : 'No potential matches found', 'info');
+        } else {
+          showToast(`Found ${matches.length} potential match${matches.length > 1 ? 'es' : ''}`, 'success');
         }
       } else {
         showToast(data.error || 'Failed to find matches', 'error');
-        setMatchingFor(null);
+        setMatchCandidates([]);
       }
     } catch {
       showToast('Failed to find matches', 'error');
-      setMatchingFor(null);
+      setMatchCandidates([]);
     } finally {
       setLoadingMatches(false);
     }
@@ -266,6 +315,57 @@ export default function AdminItemsPage() {
     }
   }
 
+  async function handleDeclineMatch(lostItemId: string, foundItemId: string) {
+    try {
+      const res = await fetch('/api/admin/match/decline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lostItemId, foundItemId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Remove this candidate from the match list
+        setMatchCandidates(prev => prev.filter(c => c.item.id !== foundItemId));
+        showToast('Match declined successfully', 'success');
+      } else {
+        showToast(data.error || 'Failed to decline match', 'error');
+      }
+    } catch {
+      showToast('Failed to decline match', 'error');
+    }
+  }
+
+  async function handleCreateMatchFromModal(foundItemId: string) {
+    if (!selectedLostItem) return;
+
+    try {
+      const res = await fetch('/api/admin/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lostItemId: selectedLostItem.id,
+          foundItemId,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast('Items matched successfully!', 'success');
+        setShowMatchModal(false);
+        loadItems(); // Refresh the list
+      } else {
+        showToast(data.error || 'Failed to match items', 'error');
+      }
+    } catch {
+      showToast('Failed to match items', 'error');
+    }
+  }
+
+  function openCompareViewFromModal(candidate: MatchCandidate) {
+    // Show comparison view within the same modal
+    setModalCompareView(candidate);
+  }
+
   // Note: Filters are for display only and don't affect pagination
   // For proper filtering with pagination, filters should be passed to the API
   // Currently showing items as returned by the API
@@ -289,42 +389,94 @@ export default function AdminItemsPage() {
           <p className="text-gray-600 dark:text-gray-400 mt-2">Review and manage all reported lost items</p>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm mb-6 border border-gray-200 dark:border-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
+        {/* Active Handoffs Banner */}
+        {activeHandoffs.length > 0 && (
+          <div className="mb-6 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                  Active Handoffs ({activeHandoffs.length})
+                </h3>
+              </div>
+              <button
+                onClick={loadActiveHandoffs}
+                className="text-sm text-purple-700 dark:text-purple-300 hover:underline"
+              >
+                Refresh
+              </button>
+            </div>
+            <div className="space-y-2">
+              {activeHandoffs.map((handoff: any) => (
+                <div key={handoff.id} className="bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800 rounded-lg p-3 flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {handoff.lostItem?.title} ↔ {handoff.foundItem?.title}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {handoff.ownerVerifiedAdmin && !handoff.adminVerifiedOwner && '⏳ Waiting for you to verify owner code'}
+                      {!handoff.ownerVerifiedAdmin && handoff.adminVerifiedOwner && '⏳ Waiting for owner to verify your code'}
+                      {!handoff.ownerVerifiedAdmin && !handoff.adminVerifiedOwner && '⏳ Waiting for both parties'}
+                    </div>
+                  </div>
+                  <Link
+                    href={`/admin/handoff/${handoff.id}`}
+                    className="ml-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Resume Handoff
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Filters - Compact Design */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm mb-6 border border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filters</h2>
+              <button
+                onClick={exportToCSV}
+                className="px-3 py-1.5 bg-gray-800 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors text-xs font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export CSV
+              </button>
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by title or description..."
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="🔍 Search items..."
+                className="px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 <option value="all">All Statuses</option>
-                <option value="LOST">Lost</option>
-                <option value="IN_STORAGE">In Storage</option>
                 <option value="PENDING">Pending</option>
+                <option value="IN_STORAGE">In Storage</option>
                 <option value="MATCHED">Matched</option>
                 <option value="CLAIMED">Claimed</option>
+                <option value="ARCHIVED">Archived</option>
+                <option value="RESOLVED">Resolved</option>
                 <option value="DONATED">Donated</option>
                 <option value="DISPOSED">Disposed</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 <option value="all">All Categories</option>
                 <option value="electronics">Electronics</option>
@@ -334,28 +486,19 @@ export default function AdminItemsPage() {
                 <option value="other">Other</option>
               </select>
             </div>
-            <div className="flex items-end">
-              <button
-                onClick={exportToCSV}
-                className="w-full md:w-auto px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium"
-                title="Export current list to CSV"
-              >
-                Export CSV
-              </button>
-            </div>
           </div>
         </div>
 
-        {/* Items List */}
+        {/* Items List - Modern Card Grid */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-20">
             <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading items...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading items...</p>
           </div>
         ) : items.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm p-12 text-center">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No items found</h3>
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-16 text-center">
+            <div className="text-7xl mb-4">🔍</div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">No items found</h3>
             <p className="text-gray-600 dark:text-gray-400">
               {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all'
                 ? 'Try adjusting your filters'
@@ -363,127 +506,213 @@ export default function AdminItemsPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
             {items.map((item) => (
-              <div key={item.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
-                <div className="flex gap-6">
+              <div key={item.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden group">
+                <div className="flex flex-col md:flex-row">
+                  {/* Image Section */}
                   {item.imageUrl && (
-                    <div className="relative w-32 h-32 flex-shrink-0">
+                    <div className="relative w-full md:w-48 h-48 flex-shrink-0 bg-gray-100 dark:bg-gray-800">
                       <Image
                         src={item.imageUrl}
                         alt={item.title}
                         fill
-                        sizes="128px"
-                        className="object-cover rounded-lg"
+                        sizes="(max-width: 768px) 100vw, 192px"
+                        className="object-cover"
                       />
+                      <div className="absolute top-3 right-3">
+                        <span
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-full shadow-lg backdrop-blur-sm ${
+                            item.status === 'PENDING'
+                              ? 'bg-yellow-500/90 text-white'
+                              : item.status === 'MATCHED'
+                              ? 'bg-blue-500/90 text-white'
+                              : item.status === 'CLAIMED'
+                              ? 'bg-green-500/90 text-white'
+                              : item.status === 'RESOLVED'
+                              ? 'bg-purple-500/90 text-white'
+                              : item.status === 'DONATED'
+                              ? 'bg-teal-500/90 text-white'
+                              : item.status === 'DISPOSED'
+                              ? 'bg-red-500/90 text-white'
+                              : 'bg-gray-500/90 text-white'
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </div>
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
+                  
+                  {/* Content Section */}
+                  <div className="flex-1 p-5">
                     <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{item.description}</p>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{item.description}</p>
                       </div>
-                      <span
-                        className={`px-3 py-1 text-xs font-medium rounded-full flex-shrink-0 ml-4 ${
-                          item.status === 'PENDING'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : item.status === 'MATCHED'
-                            ? 'bg-blue-100 text-blue-800'
-                            : item.status === 'CLAIMED'
-                            ? 'bg-green-100 text-green-800'
-                            : item.status === 'RESOLVED'
-                            ? 'bg-purple-100 text-purple-800'
-                             : item.status === 'DONATED'
-                             ? 'bg-teal-100 text-teal-800'
-                             : item.status === 'DISPOSED'
-                             ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {item.status}
-                      </span>
+                      {!item.imageUrl && (
+                        <span
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-full ml-4 flex-shrink-0 ${
+                            item.status === 'PENDING'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                              : item.status === 'MATCHED'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                              : item.status === 'CLAIMED'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                              : item.status === 'RESOLVED'
+                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                              : item.status === 'DONATED'
+                              ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
+                              : item.status === 'DISPOSED'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
-                      <div>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">Category:</span>
-                        <span className="ml-2 capitalize">{item.category}</span>
+                    
+                    {/* Info Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <span className="text-gray-900 dark:text-gray-100 font-medium capitalize">{item.category}</span>
                       </div>
-                      <div>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">Location:</span>
-                        <span className="ml-2">{item.location || 'N/A'}</span>
+                      <div className="flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="text-gray-700 dark:text-gray-300">{item.location || 'N/A'}</span>
                       </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Date:</span>
-                        <span className="ml-2">{format(new Date(item.lostDate), 'MMM dd, yyyy')}</span>
+                      <div className="flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-gray-700 dark:text-gray-300">{format(new Date(item.lostDate), 'MMM dd, yyyy')}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-700">Reported by:</span>
-                        <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <div className="flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="text-gray-700 dark:text-gray-300 truncate">{item.reportedBy?.name || item.reportedBy?.email || 'Anonymous'}</span>
+                      </div>
+                    </div>
+
+                    {/* Reporter Contact Information */}
+                    {(item.reportedBy?.email || item.contactInfo) && (
+                      <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          <span className="ml-1 font-medium text-blue-700">{item.contactInfo}</span>
+                          <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">Reporter Contact Information</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                          {item.reportedBy?.name && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Name:</span>
+                              <span className="text-gray-900 dark:text-gray-100">{item.reportedBy.name}</span>
+                            </div>
+                          )}
+                          {item.reportedBy?.email && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span>
+                              <span className="text-gray-900 dark:text-gray-100">{item.reportedBy.email}</span>
+                            </div>
+                          )}
+                          {item.contactInfo && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Phone:</span>
+                              <span className="text-gray-900 dark:text-gray-100">{item.contactInfo}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                    {item.reportedBy && (
-                      <p className="text-xs text-gray-500 mb-4">
-                        User: {item.reportedBy.name || item.reportedBy.email || 'Anonymous'}
-                      </p>
                     )}
+                    
+                    {/* Action Buttons */}
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => openMatchModal(item.id)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-sm font-medium shadow-sm hover:shadow flex items-center gap-2"
                       >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
                         Find Matches
                       </button>
                       <button
                         onClick={() => handleAction('claim', item.id)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-1.5"
                       >
-                        Mark as Claimed
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Claimed
                       </button>
                       <button
                         onClick={() => handleAction('archive', item.id)}
-                        className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
+                        className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium flex items-center gap-1.5"
                       >
-                        Archive
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                        </svg>
+                        In Storage
                       </button>
-                       <button
-                         onClick={() => handleAction('donate', item.id)}
-                         className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
-                       >
-                         Mark as Donated
-                       </button>
-                       <button
-                         onClick={() => handleAction('dispose', item.id)}
-                         className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
-                       >
-                         Mark as Disposed
-                       </button>
+                      <button
+                        onClick={() => handleAction('donate', item.id)}
+                        className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-1.5"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Donated
+                      </button>
+                      <button
+                        onClick={() => handleAction('dispose', item.id)}
+                        className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center gap-1.5"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Disposed
+                      </button>
                       {item.status === 'MATCHED' && (
                         <button
                           onClick={() => handleAction('handoff', item.id)}
-                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-                          title="Approve for handoff and generate mutual PINs"
+                          className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center gap-1.5"
                         >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
                           Start Handoff
                         </button>
                       )}
                       {item.status === 'ARCHIVED' && (
                         <button
                           onClick={() => handleAction('restore', item.id)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                          className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-1.5"
                         >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
                           Restore
                         </button>
                       )}
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                        className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center gap-1.5"
                       >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                         Delete
                       </button>
                     </div>
@@ -877,11 +1106,8 @@ export default function AdminItemsPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm('Are you sure you want to decline this match? It will be removed from the suggestions.')) {
-                          // Remove this candidate from the match list
-                          setMatchCandidates(prev => prev.filter(c => c.item.id !== compareView.found.item.id));
-                          setCompareView(null);
-                          showToast('Match declined and removed from suggestions', 'info');
+                        if (confirm('Are you sure you want to decline this match? It will be permanently removed from future suggestions.')) {
+                          handleDeclineMatch(matchingFor!, compareView.found.item.id);
                         }
                       }}
                       className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
@@ -894,10 +1120,24 @@ export default function AdminItemsPage() {
                   </div>
 
                   {/* Secondary Actions */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <button
                       onClick={() => {
-                        if (confirm('Archive this lost item? You can still restore it later.')) {
+                        if (confirm('Mark found item as "In Storage"? This item will be ready for handoff.')) {
+                          handleAction('storage', compareView.found.item.id);
+                          showToast('Found item marked as In Storage', 'success');
+                        }
+                      }}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                      In Storage
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Move this lost item to storage? You can still restore it later.')) {
                           handleAction('archive', matchingFor!);
                         }
                       }}
@@ -906,7 +1146,7 @@ export default function AdminItemsPage() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                       </svg>
-                      Archive Lost Item
+                      In Storage
                     </button>
                     <button
                       onClick={() => {
@@ -920,19 +1160,445 @@ export default function AdminItemsPage() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      Delete Lost Item
+                      Delete Lost
                     </button>
                     <button
                       onClick={() => setCompareView(null)}
-                      className="px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                      className="px-4 py-2 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                       </svg>
-                      Back to Matches
+                      Back
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Match Modal - Beautiful UI like Found Items */}
+        {showMatchModal && selectedLostItem && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-800">
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {modalCompareView && (
+                    <button
+                      onClick={() => setModalCompareView(null)}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors mr-2"
+                      title="Back to matches"
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                    </button>
+                  )}
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">
+                      {modalCompareView ? 'Side-by-Side Comparison' : 'Find Matches for Lost Item'}
+                    </h2>
+                    <p className="text-blue-100 text-sm mt-0.5">
+                      {modalCompareView ? `Match Score: ${modalCompareView.score.toFixed(1)}%` : 'Showing potential found items that match'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowMatchModal(false);
+                    setModalCompareView(null);
+                  }}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+                {/* Comparison View */}
+                {modalCompareView ? (
+                  <div className="p-6">
+                    {/* Match Score Summary */}
+                    <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">Overall Match Score</h3>
+                          <div className="flex items-center gap-4">
+                            <div className={`text-5xl font-bold ${
+                              modalCompareView.score >= 70 ? 'text-green-600' :
+                              modalCompareView.score >= 50 ? 'text-yellow-600' :
+                              'text-orange-600'
+                            }`}>
+                              {modalCompareView.score.toFixed(1)}%
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Category</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{modalCompareView.breakdown.categoryMatch}%</div>
+                          </div>
+                          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Title</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{modalCompareView.breakdown.titleSimilarity}%</div>
+                          </div>
+                          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Description</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{modalCompareView.breakdown.descriptionSimilarity}%</div>
+                          </div>
+                          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Location</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{modalCompareView.breakdown.locationMatch}%</div>
+                          </div>
+                          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 text-center col-span-2">
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Date Proximity</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{modalCompareView.breakdown.dateProximity}%</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Side-by-Side Comparison */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Lost Item */}
+                      <div className="bg-red-50 dark:bg-red-900/10 border-2 border-red-200 dark:border-red-800 rounded-xl p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="p-2 bg-red-600 rounded-lg">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </div>
+                          <h3 className="text-xl font-bold text-red-900 dark:text-red-100">Lost Item</h3>
+                        </div>
+                        {selectedLostItem && (
+                          <div className="space-y-4">
+                            {/* Lost Item Image */}
+                            {selectedLostItem.imageUrl && (
+                              <div>
+                                <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">Image</p>
+                                <div className="relative w-full h-48 bg-white dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-red-200 dark:border-red-700">
+                                  <img
+                                    src={selectedLostItem.imageUrl}
+                                    alt={selectedLostItem.title}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Title</p>
+                              <p className="text-base text-red-900 dark:text-red-100 font-semibold">{selectedLostItem.title}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Category</p>
+                              <p className="text-base text-red-900 dark:text-red-100 capitalize">{selectedLostItem.category}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Description</p>
+                              <p className="text-sm text-red-900 dark:text-red-100">{selectedLostItem.description}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Location</p>
+                              <p className="text-base text-red-900 dark:text-red-100">{selectedLostItem.location || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Date Lost</p>
+                              <p className="text-base text-red-900 dark:text-red-100">{format(new Date(selectedLostItem.lostDate), 'MMM dd, yyyy')}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Reported By</p>
+                              <p className="text-base text-red-900 dark:text-red-100">{selectedLostItem.reportedBy?.name || 'N/A'}</p>
+                              <p className="text-sm text-red-800 dark:text-red-200">{selectedLostItem.reportedBy?.email || ''}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Found Item */}
+                      <div className="bg-green-50 dark:bg-green-900/10 border-2 border-green-200 dark:border-green-800 rounded-xl p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="p-2 bg-green-600 rounded-lg">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <h3 className="text-xl font-bold text-green-900 dark:text-green-100">Found Item</h3>
+                        </div>
+                        <div className="space-y-4">
+                          {/* Found Item Image */}
+                          {modalCompareView.item.imageUrl && (
+                            <div>
+                              <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">Image</p>
+                              <div className="relative w-full h-48 bg-white dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-green-200 dark:border-green-700">
+                                <img
+                                  src={modalCompareView.item.imageUrl}
+                                  alt={modalCompareView.item.title}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Title</p>
+                            <p className="text-base text-green-900 dark:text-green-100 font-semibold">{modalCompareView.item.title}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Category</p>
+                            <p className="text-base text-green-900 dark:text-green-100 capitalize">{modalCompareView.item.category}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Description</p>
+                            <p className="text-sm text-green-900 dark:text-green-100">{modalCompareView.item.description}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Location</p>
+                            <p className="text-base text-green-900 dark:text-green-100">{modalCompareView.item.location || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Date Found</p>
+                            <p className="text-base text-green-900 dark:text-green-100">{format(new Date(modalCompareView.item.foundDate), 'MMM dd, yyyy')}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Turned In By</p>
+                            <p className="text-base text-green-900 dark:text-green-100">{modalCompareView.item.turnedInByName || 'N/A'}</p>
+                            {modalCompareView.item.turnedInByStudentNumber && (
+                              <p className="text-sm text-green-800 dark:text-green-200">Student #: {modalCompareView.item.turnedInByStudentNumber}</p>
+                            )}
+                            {modalCompareView.item.turnedInByContact && (
+                              <p className="text-sm text-green-800 dark:text-green-200">Contact: {modalCompareView.item.turnedInByContact}</p>
+                            )}
+                            {modalCompareView.item.turnedInByDepartment && (
+                              <p className="text-sm text-green-800 dark:text-green-200">Department: {modalCompareView.item.turnedInByDepartment}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="mt-6 flex justify-center gap-3">
+                      <button
+                        onClick={() => handleCreateMatchFromModal(modalCompareView.item.id)}
+                        className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Create Match
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (selectedLostItem) {
+                            handleDeclineMatch(selectedLostItem.id, modalCompareView.item.id);
+                          }
+                        }}
+                        className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Decline Match
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                {/* Current Lost Item */}
+                <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/10 dark:to-orange-900/10 border-b-2 border-red-200 dark:border-red-800 p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-2 bg-red-600 rounded-lg">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-red-900 dark:text-red-100">Lost Item</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-1">Title</p>
+                      <p className="text-base font-semibold text-red-900 dark:text-red-100">{selectedLostItem.title}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-1">Category</p>
+                      <p className="text-base font-semibold text-red-900 dark:text-red-100 capitalize">{selectedLostItem.category}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-1">Description</p>
+                      <p className="text-sm text-red-900 dark:text-red-100">{selectedLostItem.description}</p>
+                    </div>
+                    {selectedLostItem.location && (
+                      <div>
+                        <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-1">Last Seen Location</p>
+                        <p className="text-base font-semibold text-red-900 dark:text-red-100">{selectedLostItem.location}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-1">Date Lost</p>
+                      <p className="text-base font-semibold text-red-900 dark:text-red-100">{format(new Date(selectedLostItem.lostDate), 'MMM dd, yyyy')}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Loading State */}
+                {loadingMatches && (
+                  <div className="p-12 text-center">
+                    <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600 dark:text-gray-400">Searching for matching found items...</p>
+                  </div>
+                )}
+
+                {/* No Matches */}
+                {!loadingMatches && matchCandidates.length === 0 && (
+                  <div className="p-12 text-center">
+                    <div className="text-6xl mb-4">🔍</div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No Matches Found</h3>
+                    <p className="text-gray-600 dark:text-gray-400">No potential found items match this lost item yet.</p>
+                  </div>
+                )}
+
+                {/* Match Results */}
+                {!loadingMatches && matchCandidates.length > 0 && (
+                  <div className="p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        Found {matchCandidates.length} Potential Match{matchCandidates.length > 1 ? 'es' : ''}
+                      </h3>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Sorted by match score
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      {matchCandidates.map((candidate) => (
+                        <div
+                          key={candidate.item.id}
+                          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-lg transition-shadow"
+                        >
+                          <div className="flex items-start gap-4">
+                            {/* Match Score Badge */}
+                            <div className="flex-shrink-0">
+                              <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center font-bold text-white ${
+                                candidate.score >= 70 ? 'bg-green-600' :
+                                candidate.score >= 50 ? 'bg-yellow-600' :
+                                'bg-orange-600'
+                              }`}>
+                                <div className="text-2xl">{candidate.score.toFixed(0)}%</div>
+                                <div className="text-xs opacity-90">Match</div>
+                              </div>
+                            </div>
+
+                            {/* Item Details */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-3">
+                                <div>
+                                  <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                                    {candidate.item.title}
+                                  </h4>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                                    {candidate.item.description}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Match Breakdown */}
+                              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+                                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400">Category</div>
+                                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{candidate.breakdown.categoryMatch}%</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400">Title</div>
+                                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{candidate.breakdown.titleSimilarity}%</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400">Description</div>
+                                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{candidate.breakdown.descriptionSimilarity}%</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400">Location</div>
+                                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{candidate.breakdown.locationMatch}%</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-2">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400">Date</div>
+                                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{candidate.breakdown.dateProximity}%</div>
+                                </div>
+                              </div>
+
+                              {/* Item Metadata */}
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                  </svg>
+                                  <span className="text-gray-600 dark:text-gray-400 capitalize">{candidate.item.category}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  </svg>
+                                  <span className="text-gray-600 dark:text-gray-400">{candidate.item.location}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <span className="text-gray-600 dark:text-gray-400">{format(new Date(candidate.item.foundDate), 'MMM dd, yyyy')}</span>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  onClick={() => handleCreateMatchFromModal(candidate.item.id)}
+                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  Create Match
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (selectedLostItem) {
+                                      handleDeclineMatch(selectedLostItem.id, candidate.item.id);
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  Decline
+                                </button>
+                                <button
+                                  onClick={() => openCompareViewFromModal(candidate)}
+                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                  View Comparison
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                </>
+              )}
               </div>
             </div>
           </div>

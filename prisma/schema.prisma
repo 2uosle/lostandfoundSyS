@@ -85,6 +85,7 @@ enum ItemStatus {
   RESOLVED
   DONATED
   DISPOSED
+  IN_STORAGE
 }
 
 model ActivityLog {
@@ -116,6 +117,9 @@ enum AdminAction {
   HANDOFF_START
   HANDOFF_COMPLETE
   HANDOFF_RESET
+  DECLINE_MATCH
+  IN_STORAGE
+  ITEM_CREATED
 }
 
 model Notification {
@@ -175,6 +179,20 @@ model HandoffSession {
   @@index([ownerUserId])
   @@index([finderUserId])
   @@index([status, expiresAt])
+}
+
+// Track declined matches so they don't keep appearing
+model DeclinedMatch {
+  id          String   @id @default(cuid())
+  lostItemId  String
+  foundItemId String
+  declinedBy  String // Admin user ID who declined it
+  reason      String? // Optional reason for declining
+  createdAt   DateTime @default(now())
+
+  @@unique([lostItemId, foundItemId])
+  @@index([lostItemId])
+  @@index([foundItemId])
 }
 
 // Distributed rate limiting using database

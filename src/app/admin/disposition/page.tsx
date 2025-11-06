@@ -91,12 +91,12 @@ export default function DispositionDashboard() {
   // Removed unused counts memo to reduce lint noise
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Back Button */}
         <Link 
           href="/admin/dashboard"
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mb-6 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -105,16 +105,16 @@ export default function DispositionDashboard() {
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Disposition Dashboard</h1>
-          <p className="text-gray-600 mt-1">View items marked as donated or disposed</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Disposition Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">View items marked as donated or disposed</p>
         </div>
 
         <div className="flex items-center justify-between mb-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 inline-flex">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-1 inline-flex">
           <button
             onClick={() => setActiveTab('DONATED')}
             className={`px-6 py-2 rounded-md font-medium transition-colors ${
-              activeTab === 'DONATED' ? 'bg-teal-600 text-white' : 'text-gray-600 hover:text-gray-900'
+              activeTab === 'DONATED' ? 'bg-teal-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             Donated
@@ -122,7 +122,7 @@ export default function DispositionDashboard() {
           <button
             onClick={() => setActiveTab('DISPOSED')}
             className={`px-6 py-2 rounded-md font-medium transition-colors ${
-              activeTab === 'DISPOSED' ? 'bg-red-600 text-white' : 'text-gray-600 hover:text-gray-900'
+              activeTab === 'DISPOSED' ? 'bg-red-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             Disposed
@@ -130,7 +130,7 @@ export default function DispositionDashboard() {
           </div>
           <button
             onClick={exportToCSV}
-            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
           >
             Export CSV
           </button>
@@ -139,22 +139,22 @@ export default function DispositionDashboard() {
         {loading ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading items...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading items...</p>
           </div>
         ) : error ? (
-          <div className="bg-white border border-red-200 text-red-700 rounded-lg p-4">{error}</div>
+          <div className="bg-white dark:bg-gray-900 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg p-4">{error}</div>
         ) : items.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-12 text-center">
             <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No {activeTab.toLowerCase()} items</h3>
-            <p className="text-gray-600">Items will appear here after they are marked as {activeTab.toLowerCase()}.</p>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No {activeTab.toLowerCase()} items</h3>
+            <p className="text-gray-600 dark:text-gray-400">Items will appear here after they are marked as {activeTab.toLowerCase()}.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
-              <div key={`${item.itemType}-${item.id}`} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden">
+              <div key={`${item.itemType}-${item.id}`} className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow overflow-hidden">
                 {item.imageUrl && (
-                  <div className="relative w-full h-48">
+                  <div className="relative w-full h-48 bg-gray-100 dark:bg-gray-800">
                     <Image
                       src={item.imageUrl}
                       alt={item.title}
@@ -166,19 +166,19 @@ export default function DispositionDashboard() {
                 )}
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         item.status === 'DONATED'
-                          ? 'bg-teal-100 text-teal-800'
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300'
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                       }`}
                     >
                       {item.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
-                  <div className="space-y-1 text-xs text-gray-500 mb-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{item.description}</p>
+                  <div className="space-y-1 text-xs text-gray-500 dark:text-gray-500 mb-3">
                     <div className="flex items-center"><span className="font-medium mr-2">Type:</span><span>{item.itemType}</span></div>
                     <div className="flex items-center"><span className="font-medium mr-2">Category:</span><span className="capitalize">{item.category}</span></div>
                     {item.location && (

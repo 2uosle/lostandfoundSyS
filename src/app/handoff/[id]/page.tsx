@@ -15,6 +15,7 @@ export default function HandoffPage() {
   const [submitting, setSubmitting] = useState(false);
   const [sessionData, setSessionData] = useState<any | null>(null);
   const [otherCode, setOtherCode] = useState('');
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -76,13 +77,6 @@ export default function HandoffPage() {
       if (res.ok && data.success) {
         showToast(data.data.message, 'success');
         await load();
-        
-        // If handoff is complete and user is admin, redirect to admin dashboard
-        if (data.data.status === 'COMPLETED' && session?.user?.role === 'ADMIN') {
-          setTimeout(() => {
-            router.push('/admin/dashboard');
-          }, 2000); // 2 second delay to show success message
-        }
       } else {
         showToast(data.error || 'Incorrect code', 'error');
         await load();
@@ -91,6 +85,23 @@ export default function HandoffPage() {
       setSubmitting(false);
     }
   }
+
+  // Auto-close countdown when handoff is complete
+  useEffect(() => {
+    if (sessionData?.status === 'COMPLETED') {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            router.push('/dashboard');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [sessionData?.status, router]);
 
   if (status === 'loading' || initialLoading) {
     return (
@@ -185,8 +196,17 @@ export default function HandoffPage() {
           </div>
         )}
         {isDone && (
-          <div className="w-full px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center mb-3">
-            <div className="text-green-800 dark:text-green-200 text-sm">Success! Handoff complete and item marked as claimed.</div>
+          <div className="mb-6">
+            <div className="w-full px-4 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
+              <div className="text-green-800 dark:text-green-200 font-semibold mb-2">✓ Success! Handoff Complete</div>
+              <div className="text-green-700 dark:text-green-300 text-sm">Item marked as claimed. Redirecting in {countdown}s...</div>
+            </div>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="mt-3 w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Back to Dashboard
+            </button>
           </div>
         )}
 

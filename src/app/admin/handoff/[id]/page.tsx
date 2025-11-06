@@ -30,6 +30,7 @@ export default function AdminHandoffConsole() {
   const [info, setInfo] = useState<HandoffInfo | null>(null);
   const [ownerInput, setOwnerInput] = useState('');
   const [submitting, setSubmitting] = useState<'OWNER'|'FINDER'|null>(null);
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -94,6 +95,23 @@ export default function AdminHandoffConsole() {
       setSubmitting(null);
     }
   }
+
+  // Auto-close countdown when handoff is complete
+  useEffect(() => {
+    if (info?.status === 'COMPLETED') {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            router.push('/admin/dashboard');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [info?.status, router]);
 
   if (status === 'loading' || initialLoading) {
     return (
@@ -178,8 +196,17 @@ export default function AdminHandoffConsole() {
           )}
 
           {done && (
-            <div className="w-full px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center mb-3">
-              <div className="text-green-700 dark:text-green-300 font-semibold">✓ Handoff Complete! Both parties verified.</div>
+            <div className="mb-6">
+              <div className="w-full px-4 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
+                <div className="text-green-800 dark:text-green-200 font-semibold mb-2">✓ Handoff Complete!</div>
+                <div className="text-green-700 dark:text-green-300 text-sm">Both parties verified. Redirecting in {countdown}s...</div>
+              </div>
+              <button
+                onClick={() => router.push('/admin/dashboard')}
+                className="mt-3 w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Back to Dashboard
+              </button>
             </div>
           )}
 
