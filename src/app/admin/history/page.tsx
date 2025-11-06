@@ -308,8 +308,18 @@ export default function AdminHistoryPage() {
       ]);
 
       if (!lostRes.ok || !foundRes.ok) {
-        showToast('Failed to load item details', 'error');
-        console.error('API error:', { lostStatus: lostRes.status, foundStatus: foundRes.status });
+        // Log detailed error information
+        const lostError = !lostRes.ok ? await lostRes.text() : null;
+        const foundError = !foundRes.ok ? await foundRes.text() : null;
+        
+        console.error('API error details:', { 
+          lostStatus: lostRes.status, 
+          foundStatus: foundRes.status,
+          lostError,
+          foundError
+        });
+        
+        showToast('Failed to load item details - Check console for details', 'error');
         return;
       }
 
@@ -450,9 +460,18 @@ export default function AdminHistoryPage() {
         ? `/api/admin/items/lost?limit=100&status=all` 
         : `/api/admin/items/found?limit=100&status=all`;
       const res = await fetch(endpoint);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API error:', { status: res.status, endpoint, error: errorText });
+        showToast(`Failed to load item details (${res.status})`, 'error');
+        return;
+      }
+
       const data = await res.json();
 
       if (!data.success) {
+        console.error('API returned error:', data);
         showToast('Failed to load item details', 'error');
         return;
       }
@@ -461,6 +480,7 @@ export default function AdminHistoryPage() {
       const item = data.data.items.find((item: any) => item.id === log.itemId);
       
       if (!item) {
+        console.error('Item not found:', { itemId: log.itemId, totalItems: data.data.items.length });
         showToast('Item not found', 'error');
         return;
       }
@@ -487,7 +507,8 @@ export default function AdminHistoryPage() {
       };
 
       setViewingItem(itemDetails);
-    } catch {
+    } catch (error) {
+      console.error('Exception loading item details:', error);
       showToast('Failed to load item details', 'error');
     } finally {
       setLoadingItem(false);
