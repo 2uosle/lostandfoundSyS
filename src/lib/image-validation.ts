@@ -9,7 +9,7 @@ const JPEG_MAGIC = Buffer.from([0xFF, 0xD8, 0xFF]);
  */
 export function sanitizeFilename(filename: string): string {
   // Remove Windows drive letters first (C:, D:, etc.)
-  let cleaned = filename.replace(/^[a-zA-Z]:/, '');
+  const cleaned = filename.replace(/^[a-zA-Z]:/, '');
   
   // Split by both forward slashes and backslashes to get path components
   const parts = cleaned.split(/[/\\]+/);
