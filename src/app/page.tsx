@@ -1,5 +1,9 @@
 import Link from 'next/link'
 
+// Static page - can be cached
+export const dynamic = 'force-static'
+export const revalidate = 3600 // Revalidate every hour
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
