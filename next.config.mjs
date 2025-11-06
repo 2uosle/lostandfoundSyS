@@ -18,9 +18,6 @@ const nextConfig = {
   experimental: {
     // Enable optimized package imports
     optimizePackageImports: ['react-icons', 'date-fns', 'recharts'],
-    
-    // Enable static generation optimization
-    optimizeCss: true,
   },
 
   // Compiler optimizations
