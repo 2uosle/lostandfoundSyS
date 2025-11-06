@@ -39,6 +39,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [userEmail, setUserEmail] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('+63 ');
 
   // Automatically populate user's email from session
   useEffect(() => {
@@ -46,6 +47,27 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
       setUserEmail(session.user.email);
     }
   }, [session]);
+
+  // Handle mobile number input with automatic +63 prefix
+  const handleMobileNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // Remove all non-digit characters except +
+    value = value.replace(/[^\d+]/g, '');
+    
+    // If user deletes everything or tries to remove +63, reset to +63
+    if (value === '' || value === '+' || value === '+6' || !value.startsWith('+63')) {
+      setMobileNumber('+63 ');
+      return;
+    }
+    
+    // Add space after +63 for better readability
+    if (value.startsWith('+63') && value.length > 3 && !value.startsWith('+63 ')) {
+      value = '+63 ' + value.substring(3);
+    }
+    
+    setMobileNumber(value);
+  };
 
   const isLost = type === 'lost';
   const title = isLost ? 'Report Lost Item' : 'Report Found Item';
@@ -303,7 +325,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 name="description"
                 id="description"
                 required
-                minLength={10}
+                minLength={5}
                 maxLength={1000}
                 rows={4}
                 className="w-full px-4 py-3.5 bg-white dark:bg-gray-950 
@@ -328,6 +350,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                   name="location"
                   id="location"
                   required={!isLost}
+                  minLength={3}
                   maxLength={200}
                   className="w-full px-4 py-3 bg-white dark:bg-gray-950 
                             border border-gray-300 dark:border-gray-700 rounded-xl
@@ -386,6 +409,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                       type="text"
                       name="turnedInByName"
                       id="turnedInByName"
+                      minLength={5}
                       maxLength={100}
                       className="w-full px-4 py-3 bg-white dark:bg-gray-950 
                                 border border-gray-300 dark:border-gray-700 rounded-xl
@@ -407,6 +431,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                       type="text"
                       name="turnedInByStudentNumber"
                       id="turnedInByStudentNumber"
+                      minLength={5}
                       maxLength={50}
                       className="w-full px-4 py-3 bg-white dark:bg-gray-950 
                                 border border-gray-300 dark:border-gray-700 rounded-xl
@@ -428,6 +453,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                       type="text"
                       name="turnedInByContact"
                       id="turnedInByContact"
+                      minLength={5}
                       maxLength={100}
                       className="w-full px-4 py-3 bg-white dark:bg-gray-950 
                                 border border-gray-300 dark:border-gray-700 rounded-xl
@@ -449,6 +475,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                       type="text"
                       name="turnedInByDepartment"
                       id="turnedInByDepartment"
+                      minLength={2}
                       maxLength={100}
                       className="w-full px-4 py-3 bg-white dark:bg-gray-950 
                                 border border-gray-300 dark:border-gray-700 rounded-xl
@@ -508,8 +535,9 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                     type="tel"
                     name="mobileNumber"
                     id="mobileNumber"
-                    maxLength={15}
-                    pattern="[0-9+\-\s()]+"
+                    value={mobileNumber}
+                    onChange={handleMobileNumberChange}
+                    maxLength={18}
                     className="w-full px-4 py-3 bg-white dark:bg-gray-950 
                               border border-gray-300 dark:border-gray-700 rounded-xl
                               text-gray-900 dark:text-gray-100
@@ -518,7 +546,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                               focus:border-blue-500
                               hover:border-gray-400 dark:hover:border-gray-600
                               transition-all duration-200"
-                    placeholder="e.g., +63 912 345 6789"
+                    placeholder="+63 912 345 6789"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
