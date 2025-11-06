@@ -190,13 +190,16 @@ export async function POST(req: Request) {
         });
         
         if (user?.email) {
-          await sendMatchNotification(
-            user.email,
-            user.name || 'User',
-            lostItem.title,
-            foundItem.title,
-            Math.round(matchScore.score)
-          );
+          await sendMatchNotification({
+            userEmail: user.email,
+            userName: user.name || 'User',
+            lostItemTitle: lostItem.title,
+            lostItemDescription: lostItem.description,
+            foundItemTitle: foundItem.title,
+            foundItemDescription: foundItem.description,
+            matchScore: Math.round(matchScore.score),
+            dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`,
+          });
         }
       } catch (emailError) {
         console.error('Failed to send match notification email:', emailError);
