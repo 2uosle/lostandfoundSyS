@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
 import { playNotificationSound, playMatchSound } from '@/lib/sounds';
 
@@ -18,6 +19,7 @@ type Notification = {
 
 export default function NotificationBell() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -131,15 +133,31 @@ export default function NotificationBell() {
     // Close dropdown
     setShowDropdown(false);
 
-    // Navigate based on notification type and itemId
+    const isAdmin = session?.user?.role === 'ADMIN';
+
+    // Admin-specific routing for disposition/storage notifications
+    if (isAdmin && notification.type === 'ITEM_RESOLVED') {
+      const title = (notification.title || '').toLowerCase();
+      if (title.includes('donated')) {
+        router.push('/admin/disposition?status=donated');
+        return;
+      }
+      if (title.includes('disposed')) {
+        router.push('/admin/disposition?status=disposed');
+        return;
+      }
+      if (title.includes('storage')) {
+        router.push('/admin/found-items');
+        return;
+      }
+    }
+
+    // Default navigation based on itemType for non-admins or other types
     if (notification.itemId && notification.itemType === 'LOST') {
-      // Redirect to dashboard with item ID parameter to auto-open modal
       router.push(`/dashboard?openItem=${notification.itemId}`);
     } else if (notification.itemId && notification.itemType === 'FOUND') {
-      // For found items, redirect to browse page or dashboard
       router.push('/dashboard');
     } else {
-      // Default to dashboard
       router.push('/dashboard');
     }
   };

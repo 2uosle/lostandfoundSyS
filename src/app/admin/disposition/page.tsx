@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import Image from 'next/image';
@@ -30,7 +30,10 @@ type DispositionItem = {
 export default function DispositionDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'DONATED' | 'DISPOSED'>('DONATED');
+  const searchParams = useSearchParams();
+  const initialStatusParam = (searchParams.get('status') || 'donated').toLowerCase();
+  const initialTab: 'DONATED' | 'DISPOSED' = initialStatusParam === 'disposed' ? 'DISPOSED' : 'DONATED';
+  const [activeTab, setActiveTab] = useState<'DONATED' | 'DISPOSED'>(initialTab);
   const [items, setItems] = useState<DispositionItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +94,17 @@ export default function DispositionDashboard() {
 
   useEffect(() => {
     load(activeTab);
+  }, [activeTab]);
+
+  // Keep URL in sync with active tab for deep linking
+  useEffect(() => {
+    const status = activeTab.toLowerCase();
+    const current = searchParams.get('status');
+    if (current !== status) {
+      router.replace(`/admin/disposition?status=${status}`);
+    }
+    // We intentionally omit router/searchParams from deps to avoid loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Removed unused counts memo to reduce lint noise

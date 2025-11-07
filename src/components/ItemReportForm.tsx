@@ -214,6 +214,13 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
 
   const handleCloseModal = () => {
     setShowSuccessModal(false);
+    // If admin reported a found item, go to Manage Found Items
+    const isAdmin = session?.user?.role === 'ADMIN';
+    if (!isLost && isAdmin) {
+      router.push('/admin/found-items');
+      return;
+    }
+    // Otherwise, go to the general dashboard
     router.push('/dashboard');
   };
 
