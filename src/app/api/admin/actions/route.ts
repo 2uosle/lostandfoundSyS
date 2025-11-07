@@ -339,41 +339,67 @@ export async function POST(req: Request) {
       }
 
       case 'delete': {
-        // Get item details before deletion
-        const item = await prisma.lostItem.findUnique({
-          where: { id: itemId },
-          select: { 
-            title: true, 
-            category: true, 
-            description: true,
-            location: true,
-            lostDate: true,
-          },
-        });
+        if (itemType === 'FOUND') {
+          const item = await prisma.foundItem.findUnique({
+            where: { id: itemId },
+            select: {
+              title: true,
+              category: true,
+              description: true,
+              location: true,
+              foundDate: true,
+            },
+          });
 
-        if (!item) {
-          return errorResponse('Item not found', 404);
+          if (!item) return errorResponse('Item not found', 404);
+
+          await prisma.foundItem.delete({ where: { id: itemId } });
+          await logActivity(
+            session.user.id,
+            $Enums.AdminAction.DELETE,
+            'FOUND',
+            itemId,
+            item.title,
+            {
+              category: item.category,
+              description: item.description,
+              location: item.location,
+              foundDate: item.foundDate?.toISOString?.(),
+            }
+          );
+          return successResponse({ message: 'Item deleted successfully' });
+        } else {
+          // LOST
+          const item = await prisma.lostItem.findUnique({
+            where: { id: itemId },
+            select: { 
+              title: true, 
+              category: true, 
+              description: true,
+              location: true,
+              lostDate: true,
+            },
+          });
+
+          if (!item) return errorResponse('Item not found', 404);
+
+          await prisma.lostItem.delete({ where: { id: itemId } });
+          await logActivity(
+            session.user.id,
+            $Enums.AdminAction.DELETE,
+            'LOST',
+            itemId,
+            item.title,
+            { 
+              category: item.category,
+              description: item.description,
+              location: item.location,
+              lostDate: item.lostDate.toISOString(),
+            }
+          );
+
+          return successResponse({ message: 'Item deleted successfully' });
         }
-
-        // Delete the item
-        await prisma.lostItem.delete({ where: { id: itemId } });
-
-        // Log the deletion
-        await logActivity(
-          session.user.id,
-          $Enums.AdminAction.DELETE,
-          'LOST',
-          itemId,
-          item.title,
-          { 
-            category: item.category,
-            description: item.description,
-            location: item.location,
-            lostDate: item.lostDate.toISOString(),
-          }
-        );
-
-        return successResponse({ message: 'Item deleted successfully' });
       }
 
       case 'restore': {
@@ -408,49 +434,91 @@ export async function POST(req: Request) {
       }
 
       case 'donate': {
-        const item = await prisma.lostItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
-        if (!item) return errorResponse('Item not found', 404);
+        if (itemType === 'FOUND') {
+          const item = await prisma.foundItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
+          if (!item) return errorResponse('Item not found', 404);
 
-  await prisma.lostItem.update({ where: { id: itemId }, data: { status: 'DONATED' as any } });
-  await logActivity(session.user.id, 'DONATE' as any, 'LOST', itemId, item.title);
+          await prisma.foundItem.update({ where: { id: itemId }, data: { status: 'DONATED' as any } });
+          await logActivity(session.user.id, 'DONATE' as any, 'FOUND', itemId, item.title);
 
-        if (item.userId) {
-          await prisma.notification.create({
-            data: {
-              userId: item.userId,
-              type: 'ITEM_RESOLVED',
-              title: 'Item Donated',
-              message: `Your lost item "${item.title}" has been marked as donated by the admin.`,
-              itemId,
-              itemType: 'LOST',
-            },
-          });
+          if (item.userId) {
+            await prisma.notification.create({
+              data: {
+                userId: item.userId,
+                type: 'ITEM_RESOLVED',
+                title: 'Item Donated',
+                message: `The found item "${item.title}" has been marked as donated by the admin.`,
+                itemId,
+                itemType: 'FOUND',
+              },
+            });
+          }
+          return successResponse({ message: 'Item marked as donated' });
+        } else {
+          const item = await prisma.lostItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
+          if (!item) return errorResponse('Item not found', 404);
+
+          await prisma.lostItem.update({ where: { id: itemId }, data: { status: 'DONATED' as any } });
+          await logActivity(session.user.id, 'DONATE' as any, 'LOST', itemId, item.title);
+
+          if (item.userId) {
+            await prisma.notification.create({
+              data: {
+                userId: item.userId,
+                type: 'ITEM_RESOLVED',
+                title: 'Item Donated',
+                message: `Your lost item "${item.title}" has been marked as donated by the admin.`,
+                itemId,
+                itemType: 'LOST',
+              },
+            });
+          }
+          return successResponse({ message: 'Item marked as donated' });
         }
-
-        return successResponse({ message: 'Item marked as donated' });
       }
 
       case 'dispose': {
-        const item = await prisma.lostItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
-        if (!item) return errorResponse('Item not found', 404);
+        if (itemType === 'FOUND') {
+          const item = await prisma.foundItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
+          if (!item) return errorResponse('Item not found', 404);
 
-  await prisma.lostItem.update({ where: { id: itemId }, data: { status: 'DISPOSED' as any } });
-  await logActivity(session.user.id, 'DISPOSE' as any, 'LOST', itemId, item.title);
+          await prisma.foundItem.update({ where: { id: itemId }, data: { status: 'DISPOSED' as any } });
+          await logActivity(session.user.id, 'DISPOSE' as any, 'FOUND', itemId, item.title);
 
-        if (item.userId) {
-          await prisma.notification.create({
-            data: {
-              userId: item.userId,
-              type: 'ITEM_RESOLVED',
-              title: 'Item Disposed',
-              message: `Your lost item "${item.title}" has been marked as disposed by the admin.`,
-              itemId,
-              itemType: 'LOST',
-            },
-          });
+          if (item.userId) {
+            await prisma.notification.create({
+              data: {
+                userId: item.userId,
+                type: 'ITEM_RESOLVED',
+                title: 'Item Disposed',
+                message: `The found item "${item.title}" has been marked as disposed by the admin.`,
+                itemId,
+                itemType: 'FOUND',
+              },
+            });
+          }
+          return successResponse({ message: 'Item marked as disposed' });
+        } else {
+          const item = await prisma.lostItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
+          if (!item) return errorResponse('Item not found', 404);
+
+          await prisma.lostItem.update({ where: { id: itemId }, data: { status: 'DISPOSED' as any } });
+          await logActivity(session.user.id, 'DISPOSE' as any, 'LOST', itemId, item.title);
+
+          if (item.userId) {
+            await prisma.notification.create({
+              data: {
+                userId: item.userId,
+                type: 'ITEM_RESOLVED',
+                title: 'Item Disposed',
+                message: `Your lost item "${item.title}" has been marked as disposed by the admin.`,
+                itemId,
+                itemType: 'LOST',
+              },
+            });
+          }
+          return successResponse({ message: 'Item marked as disposed' });
         }
-
-        return successResponse({ message: 'Item marked as disposed' });
       }
 
       case 'storage': {

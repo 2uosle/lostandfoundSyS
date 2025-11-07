@@ -465,13 +465,10 @@ export default function AdminItemsPage() {
               >
                 <option value="all">All Statuses</option>
                 <option value="PENDING">Pending</option>
-                <option value="IN_STORAGE">In Storage</option>
                 <option value="MATCHED">Matched</option>
                 <option value="CLAIMED">Claimed</option>
                 <option value="ARCHIVED">Archived</option>
                 <option value="RESOLVED">Resolved</option>
-                <option value="DONATED">Donated</option>
-                <option value="DISPOSED">Disposed</option>
               </select>
               <select
                 value={categoryFilter}
@@ -657,33 +654,6 @@ export default function AdminItemsPage() {
                         </svg>
                         Claimed
                       </button>
-                      <button
-                        onClick={() => handleAction('archive', item.id)}
-                        className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium flex items-center gap-1.5"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                        </svg>
-                        In Storage
-                      </button>
-                      <button
-                        onClick={() => handleAction('donate', item.id)}
-                        className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-1.5"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Donated
-                      </button>
-                      <button
-                        onClick={() => handleAction('dispose', item.id)}
-                        className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center gap-1.5"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Disposed
-                      </button>
                       {item.status === 'MATCHED' && (
                         <button
                           onClick={() => handleAction('handoff', item.id)}
@@ -695,26 +665,7 @@ export default function AdminItemsPage() {
                           Start Handoff
                         </button>
                       )}
-                      {item.status === 'ARCHIVED' && (
-                        <button
-                          onClick={() => handleAction('restore', item.id)}
-                          className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-1.5"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          Restore
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center gap-1.5"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Delete
-                      </button>
+                      
                     </div>
                   </div>
                 </div>
@@ -1120,48 +1071,7 @@ export default function AdminItemsPage() {
                   </div>
 
                   {/* Secondary Actions */}
-                  <div className="grid grid-cols-4 gap-2">
-                    <button
-                      onClick={() => {
-                        if (confirm('Mark found item as "In Storage"? This item will be ready for handoff.')) {
-                          handleAction('storage', compareView.found.item.id);
-                          showToast('Found item marked as In Storage', 'success');
-                        }
-                      }}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                      In Storage
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Move this lost item to storage? You can still restore it later.')) {
-                          handleAction('archive', matchingFor!);
-                        }
-                      }}
-                      className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                      </svg>
-                      In Storage
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to delete this lost item? This action cannot be undone.')) {
-                          handleDelete(matchingFor!);
-                          setCompareView(null);
-                        }
-                      }}
-                      className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete Lost
-                    </button>
+                  <div className="grid grid-cols-1 gap-2">
                     <button
                       onClick={() => setCompareView(null)}
                       className="px-4 py-2 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium flex items-center justify-center gap-2"
