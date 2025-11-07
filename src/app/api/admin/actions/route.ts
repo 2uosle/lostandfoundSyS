@@ -416,7 +416,7 @@ export async function POST(req: Request) {
           const item = await prisma.lostItem.findUnique({ where: { id: itemId }, select: { title: true, status: true } });
           if (!item) return errorResponse('Item not found', 404);
 
-          let target: any = 'PENDING';
+          const target: any = 'PENDING';
           const current = item.status as any;
           if (current === 'PENDING') {
             return errorResponse('Item is already in PENDING status', 400);
@@ -429,7 +429,7 @@ export async function POST(req: Request) {
           const item = await prisma.foundItem.findUnique({ where: { id: itemId }, select: { title: true, status: true } });
           if (!item) return errorResponse('Item not found', 404);
 
-          let target: any = 'PENDING';
+          const target: any = 'PENDING';
           const current = item.status as any;
           if (current === 'PENDING') {
             return errorResponse('Item is already in PENDING status', 400);
