@@ -40,7 +40,7 @@ export async function GET(req: Request) {
       prisma.foundItem.findMany({
         where: { status: { in: statuses as any } },
         orderBy: { updatedAt: 'desc' },
-        select: {
+        select: ({
           id: true,
           title: true,
           description: true,
@@ -50,10 +50,14 @@ export async function GET(req: Request) {
           status: true,
           imageUrl: true,
           contactInfo: true,
+          // Disposition metadata (these fields exist after migration; cast to any to avoid local type mismatch prior to prisma generate)
+          dispositionLocation: true,
+          dispositionRecipient: true,
+          dispositionDetails: true,
           createdAt: true,
           updatedAt: true,
           reportedBy: { select: { name: true, email: true } },
-        },
+        } as any),
       }),
     ]);
 
