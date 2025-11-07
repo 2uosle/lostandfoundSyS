@@ -90,7 +90,10 @@ export async function POST(req: Request) {
           select: { id: true, userId: true, title: true },
         });
         if (!found) return errorResponse('Matched found item not found', 404);
-        if (!lost.userId || !found.userId) return errorResponse('Both parties must be registered users', 400);
+        if (!lost.userId) return errorResponse('Lost item has no associated user to notify', 400);
+
+        // If the found item has no user (common), bind the admin as the counterparty for verification
+        const finderUserId = found.userId || session.user.id;
 
         // Generate 2 codes: owner and admin (finder already gave item to admin)
         const anyPrisma: any = prisma;
@@ -98,45 +101,49 @@ export async function POST(req: Request) {
         const adminCode = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-        const hs = await anyPrisma.handoffSession.create({
-          data: {
-            lostItemId: lost.id,
-            foundItemId: found.id,
-            ownerUserId: lost.userId,
-            finderUserId: found.userId,
-            ownerCode,
-            adminCode,
-            expiresAt,
-            status: 'ACTIVE' as any,
-          },
-        });
-        // push update to SSE consumers
-        emitHandoffUpdate(hs.id);
+        try {
+          const hs = await anyPrisma.handoffSession.create({
+            data: {
+              lostItemId: lost.id,
+              foundItemId: found.id,
+              ownerUserId: lost.userId!,
+              finderUserId,
+              ownerCode,
+              adminCode,
+              expiresAt,
+              status: 'ACTIVE' as any,
+            },
+          });
+          // push update to SSE consumers
+          emitHandoffUpdate(hs.id);
 
-        // Notify owner with their code (finder is not involved in verification)
-        const notifications = [];
-        if (lost.userId) {
-          notifications.push(
-            prisma.notification.create({
-              data: {
-                userId: lost.userId,
-                type: 'ITEM_MATCHED',
-                title: 'Handoff Ready: Your Code',
-                message: `Your lost item "${lost.title}" is ready for pickup. Your verification code is: ${ownerCode}. Go to the admin desk and exchange codes to claim your item.`,
-                itemId: lost.id,
-                itemType: 'LOST',
-              },
-            })
+          // Notify owner with their code
+          await prisma.notification.create({
+            data: {
+              userId: lost.userId!,
+              type: 'ITEM_MATCHED',
+              title: 'Handoff Ready: Your Code',
+              message: `Your lost item "${lost.title}" is ready for pickup. Your verification code is: ${ownerCode}. Go to the admin desk and exchange codes to claim your item.`,
+              itemId: lost.id,
+              itemType: 'LOST',
+            },
+          });
+
+          // Log start
+          await logActivity(
+            session.user.id,
+            ($Enums.AdminAction.HANDOFF_START as any),
+            'LOST',
+            lost.id,
+            lost.title,
+            { handoffSessionId: hs.id, expiresAt, handoff: 'START' }
           );
-        }
-        if (notifications.length > 0) {
-          await Promise.all(notifications);
-        }
 
-        // Log using an existing AdminAction to avoid enum mismatch if Prisma Client wasn't regenerated
-        await logActivity(session.user.id, $Enums.AdminAction.MATCH, 'LOST', lost.id, lost.title, { handoffSessionId: hs.id, expiresAt, handoff: 'START' });
-
-        return successResponse({ message: 'Handoff session created', handoffSessionId: hs.id, expiresAt });
+          return successResponse({ message: 'Handoff session created', handoffSessionId: hs.id, expiresAt });
+        } catch (e) {
+          console.error('Failed to create handoff session:', e);
+          return errorResponse('Failed to start handoff session', 500);
+        }
       }
 
       case 'claim': {
