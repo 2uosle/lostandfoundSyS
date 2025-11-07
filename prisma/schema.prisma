@@ -68,6 +68,10 @@ model FoundItem {
   turnedInByStudentNumber String?
   turnedInByContact       String?
   turnedInByDepartment    String?
+  // Disposition details for Donated/Disposed actions
+  dispositionLocation     String?
+  dispositionRecipient    String?
+  dispositionDetails      String?
   createdAt               DateTime   @default(now())
   updatedAt               DateTime   @updatedAt
   matchedItem             LostItem?  @relation("ItemMatch")

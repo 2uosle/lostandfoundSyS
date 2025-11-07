@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { showToast } from '@/components/Toast';
+import dynamic from 'next/dynamic';
+const DispositionModal = dynamic(() => import('@/components/DispositionModal'), { ssr: false });
 import { format } from 'date-fns';
 
 type FoundItem = {
@@ -46,6 +48,10 @@ type LostItem = {
 };
 
 export default function AdminFoundItemsPage() {
+  // State declarations
+  const [showDispositionModal, setShowDispositionModal] = useState(false);
+  const [dispositionMethod, setDispositionMethod] = useState<'donated' | 'disposed' | null>(null);
+  const [dispositionItem, setDispositionItem] = useState<FoundItem | null>(null);
   const [items, setItems] = useState<FoundItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,101 +61,139 @@ export default function AdminFoundItemsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 5;
-
-  // Match modal state
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchingLostItems, setMatchingLostItems] = useState<LostItem[]>([]);
   const [selectedFoundItem, setSelectedFoundItem] = useState<FoundItem | null>(null);
   const [loadingMatches, setLoadingMatches] = useState(false);
 
+  // Fetch items from API
   async function loadItems() {
     setLoading(true);
     try {
       const params = new URLSearchParams({
+        search: searchTerm,
+        status: statusFilter,
+        category: categoryFilter,
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
       });
-      
-      if (searchTerm) params.append('search', searchTerm);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (categoryFilter !== 'all') params.append('category', categoryFilter);
-      
-      const res = await fetch(`/api/admin/items/found?${params.toString()}`);
+      const res = await fetch('/api/admin/items/found?' + params.toString());
       const data = await res.json();
       if (data.success) {
-        setItems(data.data.items || data.data);
-        if (data.data.pagination) {
-          setTotalPages(data.data.pagination.totalPages);
-          setTotalItems(data.data.pagination.total);
-        }
+        setItems(data.data?.items || []);
+        setTotalPages(data.data?.pagination?.totalPages || 1);
+        setTotalItems(data.data?.pagination?.total || 0);
       } else {
-        showToast(data.error || 'Failed to load found items', 'error');
+        showToast(data.error || 'Failed to load items', 'error');
       }
-    } catch (e) {
-      showToast('Failed to load found items', 'error');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Error loading items:', error);
+      showToast('Failed to load items', 'error');
     }
+    setLoading(false);
   }
 
   useEffect(() => {
-    // Reset to page 1 when filters change
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    } else {
-      loadItems();
-    }
-  }, [searchTerm, statusFilter, categoryFilter]);
-
-  useEffect(() => {
     loadItems();
-  }, [currentPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, categoryFilter, currentPage]);
 
-  async function openMatchModal(id: string) {
-    const foundItem = items.find(item => item.id === id);
-    if (!foundItem) return;
+  // Handler functions
+  function openDispositionModal(method: 'donated' | 'disposed', item: FoundItem) {
+    console.log('Opening disposition modal:', method, item.title);
+    setDispositionMethod(method);
+    setDispositionItem(item);
+    setShowDispositionModal(true);
+  }
 
-    setSelectedFoundItem(foundItem);
-    setLoadingMatches(true);
-    setShowMatchModal(true);
-
+  async function handleDispositionSubmit(fields: { method: 'donated' | 'disposed'; location: string; recipient: string; details: string; }) {
+    if (!dispositionItem) return;
     try {
-      const res = await fetch('/api/match', {
+      const res = await fetch('/api/admin/actions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'found', id }),
+        body: JSON.stringify({
+          action: fields.method === 'donated' ? 'donate' : 'dispose',
+          itemId: dispositionItem.id,
+          itemType: 'FOUND',
+          disposition: {
+            location: fields.location,
+            recipient: fields.recipient,
+            details: fields.details,
+          },
+        }),
       });
       const data = await res.json();
-      console.log('Match API response:', data); // Debug log
       if (data.success) {
-        const rawMatches = Array.isArray(data.data) ? data.data : data.data.matches || [];
-        console.log('Parsed matches:', rawMatches); // Debug log
-        console.log('First match details:', JSON.stringify(rawMatches[0], null, 2)); // Debug log
-        
-        // Extract items - the API returns {item, score, breakdown} structure
-        const matches = rawMatches.map((match: any) => ({
-          ...match.item,
-          score: match.score,
-          breakdown: match.breakdown
-        }));
-        
-        setMatchingLostItems(matches);
-        if (matches.length === 0) {
-          showToast('No matching lost items found', 'info');
-        } else {
-          showToast(`Found ${matches.length} potential match${matches.length > 1 ? 'es' : ''}`, 'success');
-        }
+        showToast(data.data?.message || 'Action completed', 'success');
+        setShowDispositionModal(false);
+        setDispositionMethod(null);
+        setDispositionItem(null);
+        loadItems();
       } else {
-        showToast(data.error || 'Failed to find matches', 'error');
-        setMatchingLostItems([]);
+        showToast(data.error || 'Action failed', 'error');
       }
-    } catch (e) {
-      console.error('Match error:', e); // Debug log
-      showToast('Failed to find matches', 'error');
-      setMatchingLostItems([]);
-    } finally {
-      setLoadingMatches(false);
+    } catch {
+      showToast('Action failed', 'error');
     }
+  }
+
+  async function handleAction(action: 'storage' | 'restore', id: string) {
+    try {
+      const res = await fetch('/api/admin/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, itemId: id, itemType: 'FOUND' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.data?.message || 'Action completed', 'success');
+        loadItems();
+      } else {
+        showToast(data.error || 'Action failed', 'error');
+      }
+    } catch {
+      showToast('Action failed', 'error');
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Are you sure you want to delete this found item?')) return;
+    try {
+      const res = await fetch('/api/admin/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', itemId: id, itemType: 'FOUND' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        showToast('Item deleted successfully', 'success');
+      } else {
+        showToast(data.error || 'Failed to delete item', 'error');
+      }
+    } catch {
+      showToast('Failed to delete item', 'error');
+    }
+  }
+
+  async function openMatchModal(item: FoundItem) {
+    setSelectedFoundItem(item);
+    setShowMatchModal(true);
+    setLoadingMatches(true);
+    
+    try {
+      const res = await fetch('/api/admin/match?foundItemId=' + item.id);
+      const data = await res.json();
+      if (data.success) {
+        setMatchingLostItems(data.data?.matches || []);
+      } else {
+        showToast(data.error || 'Failed to load matches', 'error');
+      }
+    } catch {
+      showToast('Failed to load matches', 'error');
+    }
+    setLoadingMatches(false);
   }
 
   async function handleCreateMatch(lostItemId: string) {
@@ -199,48 +243,6 @@ export default function AdminFoundItemsPage() {
       }
     } catch (e) {
       showToast('Failed to decline match', 'error');
-    }
-  }
-
-  // Found Items: Admin actions for storage/donate/dispose/delete
-  async function handleAction(action: 'storage' | 'donate' | 'dispose', id: string) {
-    try {
-      const res = await fetch('/api/admin/actions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, itemId: id, itemType: 'FOUND' }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.data?.message || 'Action completed', 'success');
-        // Refresh list to reflect updated status
-        loadItems();
-      } else {
-        showToast(data.error || 'Action failed', 'error');
-      }
-    } catch {
-      showToast('Action failed', 'error');
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this found item?')) return;
-
-    try {
-      const res = await fetch('/api/admin/actions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', itemId: id, itemType: 'FOUND' }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setItems((prev) => prev.filter((i) => i.id !== id));
-        showToast('Item deleted successfully', 'success');
-      } else {
-        showToast(data.error || 'Failed to delete item', 'error');
-      }
-    } catch {
-      showToast('Failed to delete item', 'error');
     }
   }
 
@@ -371,12 +373,13 @@ export default function AdminFoundItemsPage() {
                       <div className="absolute top-3 right-3">
                         <span className={`px-3 py-1.5 text-xs font-semibold rounded-lg backdrop-blur-sm ${
                           item.status === 'PENDING' ? 'bg-yellow-500/90 text-white' :
+                          item.status === 'IN_STORAGE' ? 'bg-indigo-500/90 text-white' :
                           item.status === 'MATCHED' ? 'bg-blue-500/90 text-white' :
                           item.status === 'CLAIMED' ? 'bg-green-500/90 text-white' :
                           item.status === 'RESOLVED' ? 'bg-purple-500/90 text-white' :
                           item.status === 'DONATED' ? 'bg-teal-500/90 text-white' :
                           item.status === 'DISPOSED' ? 'bg-red-500/90 text-white' : 'bg-gray-500/90 text-white'
-                        }`}>{item.status}</span>
+                        }`}>{item.status === 'IN_STORAGE' ? 'In Storage' : item.status}</span>
                       </div>
                     </div>
                   )}
@@ -455,35 +458,50 @@ export default function AdminFoundItemsPage() {
                       </div>
                     )}
 
-                    {/* Action Buttons (Found Items context): In Storage, Donated, Disposed, Delete */}
+                    {/* Action Buttons (Found Items context): conditional based on status */}
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => handleAction('storage', item.id)}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        In Storage
-                      </button>
-                      <button
-                        onClick={() => handleAction('donate', item.id)}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Donated
-                      </button>
-                      <button
-                        onClick={() => handleAction('dispose', item.id)}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Disposed
-                      </button>
+                      {/* Show Restore button if item is in storage, donated, or disposed */}
+                      {(item.status === 'IN_STORAGE' || item.status === 'DONATED' || item.status === 'DISPOSED') ? (
+                        <button
+                          onClick={() => handleAction('restore', item.id)}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          Restore to Pending
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleAction('storage', item.id)}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            In Storage
+                          </button>
+                          <button
+                            onClick={() => openDispositionModal('donated', item)}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Donated
+                          </button>
+                          <button
+                            onClick={() => openDispositionModal('disposed', item)}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Disposed
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
@@ -738,6 +756,34 @@ export default function AdminFoundItemsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Disposition Modal for Donated/Disposed */}
+      {showDispositionModal && dispositionMethod === 'donated' && dispositionItem && (
+        <DispositionModal
+          open={showDispositionModal}
+          onClose={() => {
+            setShowDispositionModal(false);
+            setDispositionMethod(null);
+            setDispositionItem(null);
+          }}
+          onSubmit={handleDispositionSubmit}
+          method={dispositionMethod}
+          itemTitle={dispositionItem.title}
+        />
+      )}
+      {showDispositionModal && dispositionMethod === 'disposed' && dispositionItem && (
+        <DispositionModal
+          open={showDispositionModal}
+          onClose={() => {
+            setShowDispositionModal(false);
+            setDispositionMethod(null);
+            setDispositionItem(null);
+          }}
+          onSubmit={handleDispositionSubmit}
+          method={dispositionMethod}
+          itemTitle={dispositionItem.title}
+        />
       )}
     </div>
   );

@@ -40,11 +40,12 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    
-    // Validate request
-  const { action, itemId, matchWithId, itemType } = adminActionSchema.parse(body);
+    // Accept disposition details for donate/dispose actions
+    const { action, itemId, matchWithId, itemType, disposition } = body;
+    // Validate request (allow disposition to pass through)
+    const { action: parsedAction, itemId: parsedItemId, matchWithId: parsedMatchWithId, itemType: parsedItemType } = adminActionSchema.parse({ action, itemId, matchWithId, itemType });
 
-    switch (action) {
+  switch (parsedAction) {
       case 'archive': {
         // Get item details before archiving
         const item = await prisma.lostItem.findUnique({
@@ -415,11 +416,11 @@ export async function POST(req: Request) {
           const item = await prisma.lostItem.findUnique({ where: { id: itemId }, select: { title: true, status: true } });
           if (!item) return errorResponse('Item not found', 404);
 
-          let target: any = null;
+          let target: any = 'PENDING';
           const current = item.status as any;
-          if (current === 'ARCHIVED') target = 'PENDING';
-          else if (current === 'DONATED' || current === 'DISPOSED') target = 'ARCHIVED';
-          else return errorResponse('Cannot restore from current status', 400);
+          if (current === 'PENDING') {
+            return errorResponse('Item is already in PENDING status', 400);
+          }
 
           await prisma.lostItem.update({ where: { id: itemId }, data: { status: target as any } });
           await logActivity(session.user.id, 'RESTORE' as any, 'LOST', itemId, item.title, { from: item.status, to: target });
@@ -428,11 +429,11 @@ export async function POST(req: Request) {
           const item = await prisma.foundItem.findUnique({ where: { id: itemId }, select: { title: true, status: true } });
           if (!item) return errorResponse('Item not found', 404);
 
-          let target: any = null;
+          let target: any = 'PENDING';
           const current = item.status as any;
-          if (current === 'ARCHIVED') target = 'PENDING';
-          else if (current === 'DONATED' || current === 'DISPOSED') target = 'ARCHIVED';
-          else return errorResponse('Cannot restore from current status', 400);
+          if (current === 'PENDING') {
+            return errorResponse('Item is already in PENDING status', 400);
+          }
 
           await prisma.foundItem.update({ where: { id: itemId }, data: { status: target as any } });
           await logActivity(session.user.id, 'RESTORE' as any, 'FOUND', itemId, item.title, { from: item.status, to: target });
@@ -441,12 +442,24 @@ export async function POST(req: Request) {
       }
 
       case 'donate': {
-        if (itemType === 'FOUND') {
-          const item = await prisma.foundItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
+        if (parsedItemType === 'FOUND') {
+          const item = await prisma.foundItem.findUnique({ where: { id: parsedItemId }, select: { title: true, userId: true } });
           if (!item) return errorResponse('Item not found', 404);
 
-          await prisma.foundItem.update({ where: { id: itemId }, data: { status: 'DONATED' as any } });
-          await logActivity(session.user.id, 'DONATE' as any, 'FOUND', itemId, item.title);
+          await prisma.foundItem.update({
+            where: { id: parsedItemId },
+            data: {
+              status: 'DONATED' as any,
+              dispositionLocation: disposition?.location ?? null,
+              dispositionRecipient: disposition?.recipient ?? null,
+              dispositionDetails: disposition?.details ?? null,
+            },
+          });
+          await logActivity(session.user.id, 'DONATE' as any, 'FOUND', parsedItemId, item.title, {
+            dispositionLocation: disposition?.location,
+            dispositionRecipient: disposition?.recipient,
+            dispositionDetails: disposition?.details,
+          });
 
           if (item.userId) {
             await prisma.notification.create({
@@ -455,18 +468,18 @@ export async function POST(req: Request) {
                 type: 'ITEM_RESOLVED',
                 title: 'Item Donated',
                 message: `The found item "${item.title}" has been marked as donated by the admin.`,
-                itemId,
+                itemId: parsedItemId,
                 itemType: 'FOUND',
               },
             });
           }
           return successResponse({ message: 'Item marked as donated' });
         } else {
-          const item = await prisma.lostItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
+          const item = await prisma.lostItem.findUnique({ where: { id: parsedItemId }, select: { title: true, userId: true } });
           if (!item) return errorResponse('Item not found', 404);
 
-          await prisma.lostItem.update({ where: { id: itemId }, data: { status: 'DONATED' as any } });
-          await logActivity(session.user.id, 'DONATE' as any, 'LOST', itemId, item.title);
+          await prisma.lostItem.update({ where: { id: parsedItemId }, data: { status: 'DONATED' as any } });
+          await logActivity(session.user.id, 'DONATE' as any, 'LOST', parsedItemId, item.title);
 
           if (item.userId) {
             await prisma.notification.create({
@@ -475,7 +488,7 @@ export async function POST(req: Request) {
                 type: 'ITEM_RESOLVED',
                 title: 'Item Donated',
                 message: `Your lost item "${item.title}" has been marked as donated by the admin.`,
-                itemId,
+                itemId: parsedItemId,
                 itemType: 'LOST',
               },
             });
@@ -485,12 +498,24 @@ export async function POST(req: Request) {
       }
 
       case 'dispose': {
-        if (itemType === 'FOUND') {
-          const item = await prisma.foundItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
+        if (parsedItemType === 'FOUND') {
+          const item = await prisma.foundItem.findUnique({ where: { id: parsedItemId }, select: { title: true, userId: true } });
           if (!item) return errorResponse('Item not found', 404);
 
-          await prisma.foundItem.update({ where: { id: itemId }, data: { status: 'DISPOSED' as any } });
-          await logActivity(session.user.id, 'DISPOSE' as any, 'FOUND', itemId, item.title);
+          await prisma.foundItem.update({
+            where: { id: parsedItemId },
+            data: {
+              status: 'DISPOSED' as any,
+              dispositionLocation: disposition?.location ?? null,
+              dispositionRecipient: disposition?.recipient ?? null,
+              dispositionDetails: disposition?.details ?? null,
+            },
+          });
+          await logActivity(session.user.id, 'DISPOSE' as any, 'FOUND', parsedItemId, item.title, {
+            dispositionLocation: disposition?.location,
+            dispositionRecipient: disposition?.recipient,
+            dispositionDetails: disposition?.details,
+          });
 
           if (item.userId) {
             await prisma.notification.create({
@@ -499,18 +524,18 @@ export async function POST(req: Request) {
                 type: 'ITEM_RESOLVED',
                 title: 'Item Disposed',
                 message: `The found item "${item.title}" has been marked as disposed by the admin.`,
-                itemId,
+                itemId: parsedItemId,
                 itemType: 'FOUND',
               },
             });
           }
           return successResponse({ message: 'Item marked as disposed' });
         } else {
-          const item = await prisma.lostItem.findUnique({ where: { id: itemId }, select: { title: true, userId: true } });
+          const item = await prisma.lostItem.findUnique({ where: { id: parsedItemId }, select: { title: true, userId: true } });
           if (!item) return errorResponse('Item not found', 404);
 
-          await prisma.lostItem.update({ where: { id: itemId }, data: { status: 'DISPOSED' as any } });
-          await logActivity(session.user.id, 'DISPOSE' as any, 'LOST', itemId, item.title);
+          await prisma.lostItem.update({ where: { id: parsedItemId }, data: { status: 'DISPOSED' as any } });
+          await logActivity(session.user.id, 'DISPOSE' as any, 'LOST', parsedItemId, item.title);
 
           if (item.userId) {
             await prisma.notification.create({
@@ -519,7 +544,7 @@ export async function POST(req: Request) {
                 type: 'ITEM_RESOLVED',
                 title: 'Item Disposed',
                 message: `Your lost item "${item.title}" has been marked as disposed by the admin.`,
-                itemId,
+                itemId: parsedItemId,
                 itemType: 'LOST',
               },
             });
@@ -529,7 +554,7 @@ export async function POST(req: Request) {
       }
 
       case 'storage': {
-        // Mark found item as "In Storage" - ready for pickup/handoff
+        // Mark found item as "In Storage"
         const item = await prisma.foundItem.findUnique({ 
           where: { id: itemId }, 
           select: { title: true, userId: true } 
@@ -556,7 +581,7 @@ export async function POST(req: Request) {
               userId: item.userId,
               type: 'ITEM_RESOLVED',
               title: 'Item In Storage',
-              message: `The found item "${item.title}" has been moved to storage and is ready for handoff.`,
+              message: `The found item "${item.title}" has been moved to storage.`,
               itemId,
               itemType: 'FOUND',
             },
