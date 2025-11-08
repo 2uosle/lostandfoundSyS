@@ -239,193 +239,109 @@ export default function NotificationBell() {
       </button>
 
       {showDropdown && mounted && createPortal(
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-[9998] bg-black/30"
-            onClick={() => setShowDropdown(false)}
-          />
-
-          {/* Mobile: full-screen sheet */}
-          <div className="fixed inset-0 z-[9999] sm:hidden flex flex-col bg-white dark:bg-gray-800">
-            {/* Header (sticky) */}
-            <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700 
-                            bg-gray-50 dark:bg-gray-900
-                            flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Notifications</h3>
-              <div className="flex items-center gap-3">
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="text-sm text-blue-600 dark:text-blue-400 
-                               hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                  >
-                    Mark all
-                  </button>
+        (() => {
+          const latest = [...notifications].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0,5);
+          const hasMore = notifications.length > latest.length;
+          return (
+            <>
+              <div className="fixed inset-0 z-[9998]" onClick={() => setShowDropdown(false)} />
+              <div className="fixed z-[9999] right-2 left-2 top-14 sm:right-0 sm:left-auto sm:top-12 w-auto sm:w-96 
+                              max-h-[70vh] sm:max-h-[32rem] 
+                              bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Notifications</h3>
+                  <div className="flex items-center gap-3">
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                      >
+                        Mark all
+                      </button>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={() => setNotifications([])}
+                        className="text-xs sm:text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
+                      >
+                        Clear
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowDropdown(false)}
+                      aria-label="Close notifications"
+                      className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                {/* List */}
+                <div className="overflow-y-auto flex-1">
+                  {loading ? (
+                    <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      <div className="w-8 h-8 border-4 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                      Loading...
+                    </div>
+                  ) : latest.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      <div className="text-4xl mb-2">🔔</div>
+                      <p>No notifications</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {latest.map(n => (
+                        <div
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${!n.read ? 'bg-blue-50 dark:bg-blue-900/20' : 'dark:bg-gray-800'}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="text-2xl flex-shrink-0 mt-0.5">{getIcon(n.type)}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className={`text-sm font-semibold break-words ${!n.read ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>{n.title}</h4>
+                                {!n.read && <span className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full flex-shrink-0 mt-1" />}
+                              </div>
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 break-words">{n.message}</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{format(new Date(n.createdAt), 'MMM dd, yyyy h:mm a')}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Footer */}
+                {(hasMore || notifications.length > 0) && (
+                  <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+                    {hasMore ? (
+                      <button
+                        onClick={() => { setShowDropdown(false); router.push('/dashboard'); }}
+                        className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                      >
+                        See more
+                      </button>
+                    ) : (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">Showing latest {latest.length}</span>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={() => { setShowDropdown(false); router.push('/dashboard'); }}
+                        className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                      >
+                        Dashboard
+                      </button>
+                    )}
+                  </div>
                 )}
-                <button
-                  onClick={() => setShowDropdown(false)}
-                  aria-label="Close notifications"
-                  className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
-            </div>
-
-            {/* List */}
-            <div className="flex-1 overflow-y-auto overscroll-contain">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  <div className="w-8 h-8 border-4 border-blue-600 dark:border-blue-400 
-                                border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                  Loading...
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  <div className="text-4xl mb-2">🔔</div>
-                  <p>No notifications yet</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      onClick={() => handleNotificationClick(notification)}
-                      className={`px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 
-                                  transition-colors cursor-pointer active:bg-gray-100 dark:active:bg-gray-600 ${
-                        !notification.read
-                          ? 'bg-blue-50 dark:bg-blue-900/20'
-                          : 'bg-white dark:bg-gray-800'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="text-2xl flex-shrink-0 mt-0.5">
-                          {getIcon(notification.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h4 className={`text-sm font-semibold break-words ${
-                              !notification.read
-                                ? 'text-gray-900 dark:text-gray-100'
-                                : 'text-gray-700 dark:text-gray-300'
-                            }`}>
-                              {notification.title}
-                            </h4>
-                            {!notification.read && (
-                              <span className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full flex-shrink-0 mt-1"></span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 break-words">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                            {format(new Date(notification.createdAt), 'MMM dd, yyyy h:mm a')}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Footer (sticky) */}
-            {notifications.length > 0 && (
-              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                <button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    router.push('/dashboard');
-                  }}
-                  className="w-full py-2.5 text-sm text-blue-600 dark:text-blue-400 
-                             hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                >
-                  View all in dashboard
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Desktop: dropdown */}
-          <div className="hidden sm:flex absolute right-0 mt-2 w-96 
-                          bg-white dark:bg-gray-800 rounded-lg shadow-xl 
-                          border border-gray-200 dark:border-gray-700 
-                          z-[9999] max-h-[32rem] overflow-hidden flex-col">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 
-                            flex items-center justify-between bg-gray-50 dark:bg-gray-900">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Notifications</h3>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                >
-                  Mark all as read
-                </button>
-              )}
-            </div>
-
-            <div className="overflow-y-auto flex-1">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  <div className="w-8 h-8 border-4 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                  Loading...
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  <div className="text-4xl mb-2">🔔</div>
-                  <p>No notifications yet</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      onClick={() => handleNotificationClick(notification)}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
-                        !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : 'dark:bg-gray-800'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="text-2xl flex-shrink-0 mt-0.5">{getIcon(notification.type)}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h4 className={`text-sm font-semibold break-words ${
-                              !notification.read ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
-                            }`}>
-                              {notification.title}
-                            </h4>
-                            {!notification.read && (
-                              <span className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full flex-shrink-0 mt-1"></span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 break-words">{notification.message}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{format(new Date(notification.createdAt), 'MMM dd, yyyy h:mm a')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {notifications.length > 0 && (
-              <div className="p-3 border-t border-gray-200 dark:border-gray-700 text-center bg-gray-50 dark:bg-gray-900">
-                <button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    router.push('/dashboard');
-                  }}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                >
-                  View all in dashboard
-                </button>
-              </div>
-            )}
-          </div>
-        </>,
+            </>
+          );
+        })(),
         document.body
       )}
     </div>
