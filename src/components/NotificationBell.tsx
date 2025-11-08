@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
+import { createPortal } from 'react-dom';
 import { playNotificationSound, playMatchSound } from '@/lib/sounds';
 
 type Notification = {
@@ -25,6 +26,12 @@ export default function NotificationBell() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  
+  // Track mounting for portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Prevent background scroll when the panel is open (helps on mobile)
   useEffect(() => {
@@ -231,22 +238,21 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {showDropdown && (
+      {showDropdown && mounted && createPortal(
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/30"
+            className="fixed inset-0 z-[9998] bg-black/30"
             onClick={() => setShowDropdown(false)}
           />
 
           {/* Mobile: full-screen sheet */}
-          <div className="fixed inset-0 z-50 sm:hidden flex flex-col bg-white dark:bg-gray-800 
-                          pt-[max(env(safe-area-inset-top),0.5rem)]">
+          <div className="fixed inset-0 z-[9999] sm:hidden flex flex-col bg-white dark:bg-gray-800">
             {/* Header (sticky) */}
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 
-                            bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur
-                            sticky top-0 flex items-center justify-between">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Notifications</h3>
+            <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700 
+                            bg-gray-50 dark:bg-gray-900
+                            flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Notifications</h3>
               <div className="flex items-center gap-3">
                 {unreadCount > 0 && (
                   <button
@@ -260,15 +266,17 @@ export default function NotificationBell() {
                 <button
                   onClick={() => setShowDropdown(false)}
                   aria-label="Close notifications"
-                  className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
                 >
-                  ✕
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto overscroll-contain scroll-smooth">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               {loading ? (
                 <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                   <div className="w-8 h-8 border-4 border-blue-600 dark:border-blue-400 
@@ -286,11 +294,11 @@ export default function NotificationBell() {
                     <div
                       key={notification.id}
                       onClick={() => handleNotificationClick(notification)}
-                      className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 
-                                  transition-colors cursor-pointer ${
+                      className={`px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 
+                                  transition-colors cursor-pointer active:bg-gray-100 dark:active:bg-gray-600 ${
                         !notification.read
                           ? 'bg-blue-50 dark:bg-blue-900/20'
-                          : 'dark:bg-gray-800'
+                          : 'bg-white dark:bg-gray-800'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -326,14 +334,13 @@ export default function NotificationBell() {
 
             {/* Footer (sticky) */}
             {notifications.length > 0 && (
-              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 
-                              sticky bottom-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 <button
                   onClick={() => {
                     setShowDropdown(false);
-                    window.location.href = '/dashboard';
+                    router.push('/dashboard');
                   }}
-                  className="w-full py-2 text-sm text-blue-600 dark:text-blue-400 
+                  className="w-full py-2.5 text-sm text-blue-600 dark:text-blue-400 
                              hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   View all in dashboard
@@ -346,7 +353,7 @@ export default function NotificationBell() {
           <div className="hidden sm:flex absolute right-0 mt-2 w-96 
                           bg-white dark:bg-gray-800 rounded-lg shadow-xl 
                           border border-gray-200 dark:border-gray-700 
-                          z-50 max-h-[32rem] overflow-hidden flex-col">
+                          z-[9999] max-h-[32rem] overflow-hidden flex-col">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 
                             flex items-center justify-between bg-gray-50 dark:bg-gray-900">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Notifications</h3>
@@ -409,7 +416,7 @@ export default function NotificationBell() {
                 <button
                   onClick={() => {
                     setShowDropdown(false);
-                    window.location.href = '/dashboard';
+                    router.push('/dashboard');
                   }}
                   className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
@@ -418,7 +425,8 @@ export default function NotificationBell() {
               </div>
             )}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
