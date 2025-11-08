@@ -132,11 +132,11 @@ export default function DispositionDashboard() {
           <p className="text-gray-600 dark:text-gray-400 mt-1">View items marked as donated or disposed</p>
         </div>
 
-        <div className="flex items-center justify-between mb-6">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-1 inline-flex">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-1 inline-flex w-full sm:w-auto">
           <button
             onClick={() => setActiveTab('DONATED')}
-            className={`px-6 py-2 rounded-md font-medium transition-colors ${
+            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-md font-medium transition-colors ${
               activeTab === 'DONATED' ? 'bg-teal-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
@@ -144,7 +144,7 @@ export default function DispositionDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('DISPOSED')}
-            className={`px-6 py-2 rounded-md font-medium transition-colors ${
+            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-md font-medium transition-colors ${
               activeTab === 'DISPOSED' ? 'bg-red-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
@@ -153,7 +153,7 @@ export default function DispositionDashboard() {
           </div>
           <button
             onClick={exportToCSV}
-            className="px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+            className="w-full sm:w-auto px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
           >
             Export CSV
           </button>
@@ -251,35 +251,35 @@ export default function DispositionDashboard() {
         )}
       </div>
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSelected(null)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-800 w-full max-w-2xl mx-4">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Item Overview</h3>
+          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-800 w-full max-w-2xl mx-auto my-8">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Item Overview</h3>
               <button onClick={() => setSelected(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
                 <svg className="w-5 h-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/></svg>
               </button>
             </div>
-            <div className="px-5 py-4 space-y-4">
-              <div className="flex gap-4">
+            <div className="px-4 sm:px-5 py-4 space-y-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
+              <div className="flex flex-col sm:flex-row gap-4">
                 {selected.imageUrl && (
-                  <div className="relative w-32 h-32 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                    <Image src={selected.imageUrl} alt={selected.title} fill sizes="128px" className="object-cover" />
+                  <div className="relative w-full sm:w-32 h-48 sm:h-32 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                    <Image src={selected.imageUrl} alt={selected.title} fill sizes="(max-width: 640px) 100vw, 128px" className="object-cover" />
                   </div>
                 )}
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <h4 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{selected.title}</h4>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${selected.status === 'DONATED' ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'}`}>{selected.status}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
+                    <h4 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 break-words">{selected.title}</h4>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${selected.status === 'DONATED' ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'}`}>{selected.status}</span>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-wrap">{selected.description}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
-                    <div><span className="font-medium text-gray-800 dark:text-gray-200">Type:</span> {selected.itemType}</div>
-                    <div><span className="font-medium text-gray-800 dark:text-gray-200">Category:</span> <span className="capitalize">{selected.category}</span></div>
-                    <div><span className="font-medium text-gray-800 dark:text-gray-200">Location:</span> {selected.location || 'N/A'}</div>
-                    <div><span className="font-medium text-gray-800 dark:text-gray-200">Date:</span> {selected.date ? format(new Date(selected.date), 'MMM dd, yyyy') : 'N/A'}</div>
-                    <div className="col-span-2"><span className="font-medium text-gray-800 dark:text-gray-200">Reporter:</span> {selected.reportedBy?.name || selected.reportedBy?.email || 'Anonymous'}</div>
-                    <div className="col-span-2"><span className="font-medium text-gray-800 dark:text-gray-200">Last Updated:</span> {format(new Date(selected.updatedAt), 'MMM dd, yyyy HH:mm')}</div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-wrap break-words">{selected.description}</p>
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="truncate"><span className="font-medium text-gray-800 dark:text-gray-200">Type:</span> {selected.itemType}</div>
+                    <div className="truncate"><span className="font-medium text-gray-800 dark:text-gray-200">Category:</span> <span className="capitalize">{selected.category}</span></div>
+                    <div className="truncate"><span className="font-medium text-gray-800 dark:text-gray-200">Location:</span> {selected.location || 'N/A'}</div>
+                    <div className="truncate"><span className="font-medium text-gray-800 dark:text-gray-200">Date:</span> {selected.date ? format(new Date(selected.date), 'MMM dd, yyyy') : 'N/A'}</div>
+                    <div className="col-span-1 sm:col-span-2 truncate"><span className="font-medium text-gray-800 dark:text-gray-200">Reporter:</span> {selected.reportedBy?.name || selected.reportedBy?.email || 'Anonymous'}</div>
+                    <div className="col-span-1 sm:col-span-2 truncate"><span className="font-medium text-gray-800 dark:text-gray-200">Last Updated:</span> {format(new Date(selected.updatedAt), 'MMM dd, yyyy HH:mm')}</div>
                   </div>
                 </div>
               </div>
@@ -287,22 +287,22 @@ export default function DispositionDashboard() {
               <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
                 <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Disposition Details</h5>
                 {selected.itemType === 'FOUND' ? (
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
                     <div>
                       <div className="text-gray-500 dark:text-gray-400">Method</div>
-                      <div className="font-medium">{selected.status === 'DONATED' ? 'Donated' : 'Disposed'}</div>
+                      <div className="font-medium break-words">{selected.status === 'DONATED' ? 'Donated' : 'Disposed'}</div>
                     </div>
                     <div>
                       <div className="text-gray-500 dark:text-gray-400">Location</div>
-                      <div className="font-medium">{selected.dispositionLocation || '—'}</div>
+                      <div className="font-medium break-words">{selected.dispositionLocation || '—'}</div>
                     </div>
                     <div>
                       <div className="text-gray-500 dark:text-gray-400">Recipient</div>
-                      <div className="font-medium">{selected.dispositionRecipient || '—'}</div>
+                      <div className="font-medium break-words">{selected.dispositionRecipient || '—'}</div>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-1 sm:col-span-2">
                       <div className="text-gray-500 dark:text-gray-400">Details / Notes</div>
-                      <div className="font-medium whitespace-pre-wrap">{selected.dispositionDetails || '—'}</div>
+                      <div className="font-medium whitespace-pre-wrap break-words">{selected.dispositionDetails || '—'}</div>
                     </div>
                   </div>
                 ) : (
@@ -310,8 +310,8 @@ export default function DispositionDashboard() {
                 )}
               </div>
             </div>
-            <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-200 dark:border-gray-800">
-              <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">Close</button>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-5 py-4 border-t border-gray-200 dark:border-gray-800">
+              <button onClick={() => setSelected(null)} className="w-full sm:w-auto px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">Close</button>
               <button
                 onClick={async (e) => {
                   e.preventDefault();
@@ -333,7 +333,7 @@ export default function DispositionDashboard() {
                     alert('Failed to restore');
                   }
                 }}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >
                 Restore to Pending
               </button>

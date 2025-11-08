@@ -383,13 +383,6 @@ export default function AdminItemsPage() {
           </svg>
           Back to Dashboard
         </Link>
-
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Manage Lost Items</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Review and manage all reported lost items</p>
-        </div>
-
-        {/* Active Handoffs Banner */}
         {activeHandoffs.length > 0 && (
           <div className="mb-6 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
@@ -397,7 +390,7 @@ export default function AdminItemsPage() {
                 <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Active Handoffs ({activeHandoffs.length})
                 </h3>
               </div>
@@ -433,14 +426,14 @@ export default function AdminItemsPage() {
           </div>
         )}
 
-        {/* Filters - Compact Design */}
+  {/* Filters - Compact Design */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm mb-6 border border-gray-200 dark:border-gray-800 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-            <div className="flex items-center justify-between">
+          <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filters</h2>
               <button
                 onClick={exportToCSV}
-                className="px-3 py-1.5 bg-gray-800 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors text-xs font-medium flex items-center gap-2"
+                className="px-3 py-1.5 bg-gray-800 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors text-xs font-medium flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -449,8 +442,8 @@ export default function AdminItemsPage() {
               </button>
             </div>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="p-3 sm:p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <input
                 type="text"
                 value={searchTerm}
@@ -542,13 +535,13 @@ export default function AdminItemsPage() {
                   )}
                   
                   {/* Content Section */}
-                  <div className="flex-1 p-5">
+                  <div className="flex-1 p-4 sm:p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors break-words">
                           {item.title}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{item.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 break-words">{item.description}</p>
                       </div>
                       {!item.imageUrl && (
                         <span
@@ -574,7 +567,7 @@ export default function AdminItemsPage() {
                     </div>
                     
                     {/* Info Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                       <div className="flex items-center gap-2 text-sm">
                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -635,10 +628,10 @@ export default function AdminItemsPage() {
                     )}
                     
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                       <button
                         onClick={() => openMatchModal(item.id)}
-                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-sm font-medium shadow-sm hover:shadow flex items-center gap-2"
+                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-sm font-medium shadow-sm hover:shadow flex items-center justify-center gap-2 w-full sm:w-auto"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -647,7 +640,7 @@ export default function AdminItemsPage() {
                       </button>
                       <button
                         onClick={() => handleAction('claim', item.id)}
-                        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-1.5"
+                        className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center gap-1.5 w-full sm:w-auto"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -657,7 +650,7 @@ export default function AdminItemsPage() {
                       {item.status === 'MATCHED' && (
                         <button
                           onClick={() => handleAction('handoff', item.id)}
-                          className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center gap-1.5"
+                          className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center justify-center gap-1.5 w-full sm:w-auto"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -676,22 +669,22 @@ export default function AdminItemsPage() {
 
         {/* Pagination Controls */}
         {!loading && items.length > 0 && totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3 sm:p-4 gap-3">
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left">
               Showing page {currentPage} of {totalPages} ({totalItems} total items)
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap justify-center">
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 First
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Previous
               </button>
@@ -715,7 +708,7 @@ export default function AdminItemsPage() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                       currentPage === page
                         ? 'bg-blue-600 text-white'
                         : 'border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -729,14 +722,14 @@ export default function AdminItemsPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
               </button>
               <button
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Last
               </button>

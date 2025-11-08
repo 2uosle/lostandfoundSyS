@@ -260,21 +260,21 @@ export default function AdminFoundItemsPage() {
           Back to Dashboard
         </Link>
 
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Manage Found Items</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Review and manage reported found items</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Manage Found Items</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">Review and manage reported found items</p>
           </div>
-          <div className="flex gap-2">
-            <Link href="/admin/items" className="px-4 py-2 bg-blue-600 text-white rounded-lg">Manage Lost Items</Link>
-            <Link href="/found" className="px-4 py-2 bg-green-600 text-white rounded-lg">Report Found Item</Link>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <Link href="/admin/items" className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg text-sm sm:text-base text-center">Manage Lost Items</Link>
+            <Link href="/found" className="flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white rounded-lg text-sm sm:text-base text-center">Report Found Item</Link>
           </div>
         </div>
 
         {/* Compact Filters Card */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 mb-6">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filters</h2>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-800 gap-3">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Filters</h2>
             <button
               onClick={async () => {
                 try {
@@ -298,7 +298,7 @@ export default function AdminFoundItemsPage() {
                   showToast('Failed to export items', 'error');
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors w-full sm:w-auto justify-center sm:justify-start"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -306,19 +306,19 @@ export default function AdminFoundItemsPage() {
               Export CSV
             </button>
           </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="🔍 Search items..."
-                className="px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="px-3 sm:px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
               />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="px-3 sm:px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
               >
                 <option value="all">All Statuses</option>
                 <option value="PENDING">Pending</option>
@@ -333,7 +333,7 @@ export default function AdminFoundItemsPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="px-3 sm:px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base sm:col-span-2 lg:col-span-1"
               >
                 <option value="all">All Categories</option>
                 <option value="electronics">Electronics</option>
@@ -385,14 +385,14 @@ export default function AdminFoundItemsPage() {
                   )}
                   
                   {/* Content Section */}
-                  <div className="flex-1 p-6">
+                  <div className="flex-1 p-4 sm:p-6">
                     <div className="mb-4">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{item.title}</h3>
-                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{item.description}</p>
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 break-words">{item.title}</h3>
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed break-words">{item.description}</p>
                     </div>
 
                     {/* Metadata Grid with Icons */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                       <div className="flex items-center gap-2 text-sm">
                         <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -459,12 +459,12 @@ export default function AdminFoundItemsPage() {
                     )}
 
                     {/* Action Buttons (Found Items context): conditional based on status */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                       {/* Show Restore button if item is in storage, donated, or disposed */}
                       {(item.status === 'IN_STORAGE' || item.status === 'DONATED' || item.status === 'DISPOSED') ? (
                         <button
                           onClick={() => handleAction('restore', item.id)}
-                          className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                          className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base w-full sm:w-auto"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -475,7 +475,7 @@ export default function AdminFoundItemsPage() {
                         <>
                           <button
                             onClick={() => handleAction('storage', item.id)}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+                            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base w-full sm:w-auto"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -484,7 +484,7 @@ export default function AdminFoundItemsPage() {
                           </button>
                           <button
                             onClick={() => openDispositionModal('donated', item)}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
+                            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base w-full sm:w-auto"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -493,7 +493,7 @@ export default function AdminFoundItemsPage() {
                           </button>
                           <button
                             onClick={() => openDispositionModal('disposed', item)}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
+                            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base w-full sm:w-auto"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -504,7 +504,7 @@ export default function AdminFoundItemsPage() {
                       )}
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                        className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors text-sm sm:text-base w-full sm:w-auto"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -521,22 +521,22 @@ export default function AdminFoundItemsPage() {
 
         {/* Pagination Controls */}
         {!loading && items.length > 0 && totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3 sm:p-4 gap-3">
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left">
               Showing page {currentPage} of {totalPages} ({totalItems} total items)
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap justify-center">
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 First
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Previous
               </button>
@@ -560,7 +560,7 @@ export default function AdminFoundItemsPage() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                       currentPage === page
                         ? 'bg-blue-600 text-white'
                         : 'border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -574,14 +574,14 @@ export default function AdminFoundItemsPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
               </button>
               <button
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Last
               </button>
@@ -592,24 +592,24 @@ export default function AdminFoundItemsPage() {
 
       {/* Match Modal */}
       {showMatchModal && selectedFoundItem && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-[calc(100vw-1.5rem)] sm:max-w-6xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-800">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <div>
-                  <h2 className="text-xl font-bold text-white">Find Matches for Found Item</h2>
-                  <p className="text-blue-100 text-sm mt-0.5">Showing potential lost items that match</p>
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-xl font-bold text-white truncate">Find Matches for Found Item</h2>
+                  <p className="text-blue-100 text-xs sm:text-sm mt-0.5 hidden sm:block">Showing potential lost items that match</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowMatchModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
               >
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -618,25 +618,25 @@ export default function AdminFoundItemsPage() {
             {/* Modal Content */}
             <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
               {/* Current Found Item */}
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 border-b-2 border-green-200 dark:border-green-800 p-6">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 border-b-2 border-green-200 dark:border-green-800 p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-green-600 rounded-lg">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-1.5 sm:p-2 bg-green-600 rounded-lg">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-green-900 dark:text-green-100">Found Item</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-green-900 dark:text-green-100">Found Item</h3>
                 </div>
-                <div className="flex gap-6">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                   {selectedFoundItem.imageUrl && (
-                    <div className="relative w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden border-2 border-green-300 dark:border-green-700">
-                      <Image src={selectedFoundItem.imageUrl} alt={selectedFoundItem.title} fill sizes="128px" className="object-cover" />
+                    <div className="relative w-full sm:w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden border-2 border-green-300 dark:border-green-700">
+                      <Image src={selectedFoundItem.imageUrl} alt={selectedFoundItem.title} fill sizes="(max-width: 640px) 100vw, 128px" className="object-cover" />
                     </div>
                   )}
-                  <div className="flex-1">
-                    <h4 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{selectedFoundItem.title}</h4>
-                    <p className="text-gray-700 dark:text-gray-300 mb-3">{selectedFoundItem.description}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 break-words">{selectedFoundItem.title}</h4>
+                    <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3 break-words">{selectedFoundItem.description}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
                       <div className="flex items-center gap-2">
                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -662,64 +662,64 @@ export default function AdminFoundItemsPage() {
               </div>
 
               {/* Matching Lost Items */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
                     Matching Lost Items {loadingMatches ? '' : `(${matchingLostItems.length})`}
                   </h3>
                 </div>
 
                 {loadingMatches ? (
-                  <div className="text-center py-12">
-                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600 dark:text-gray-400">Searching for matches...</p>
+                  <div className="text-center py-8 sm:py-12">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3 sm:mb-4"></div>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Searching for matches...</p>
                   </div>
                 ) : matchingLostItems.length === 0 ? (
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-12 text-center border-2 border-dashed border-gray-300 dark:border-gray-700">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No Matches Found</h4>
-                    <p className="text-gray-600 dark:text-gray-400">No lost items match this found item at the moment.</p>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8 sm:p-12 text-center border-2 border-dashed border-gray-300 dark:border-gray-700">
+                    <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">🔍</div>
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No Matches Found</h4>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">No lost items match this found item at the moment.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {matchingLostItems.map((lostItem) => (
-                      <div key={lostItem.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <div className="flex gap-4">
+                      <div key={lostItem.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                           {lostItem.imageUrl && (
-                            <div className="relative w-24 h-24 flex-shrink-0">
+                            <div className="relative w-full sm:w-24 h-24 flex-shrink-0">
                               <Image
                                 src={lostItem.imageUrl}
                                 alt={lostItem.title || 'Lost item'}
                                 fill
-                                sizes="96px"
+                                sizes="(max-width: 640px) 100vw, 96px"
                                 className="object-cover rounded-lg"
                               />
                             </div>
                           )}
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">{lostItem.title || 'Untitled'}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{lostItem.description || 'No description'}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row items-start justify-between mb-2 gap-2">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 break-words">{lostItem.title || 'Untitled'}</h3>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">{lostItem.description || 'No description'}</p>
                               </div>
-                              <div className="text-right ml-4 flex-shrink-0">
-                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{lostItem.score.toFixed(1)}%</div>
+                              <div className="text-center sm:text-right sm:ml-4 flex-shrink-0">
+                                <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{lostItem.score.toFixed(1)}%</div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">Match Score</div>
                               </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
                               <div>Category: <span className="capitalize">{lostItem.category || 'N/A'}</span></div>
                               <div>Location: {lostItem.location || 'N/A'}</div>
                               <div>Date: {lostItem.lostDate ? format(new Date(lostItem.lostDate), 'MMM dd, yyyy') : 'N/A'}</div>
-                              <div>Reporter: {lostItem.reportedBy?.name || lostItem.reportedBy?.email || 'Anonymous'}</div>
+                              <div className="break-words">Reporter: {lostItem.reportedBy?.name || lostItem.reportedBy?.email || 'Anonymous'}</div>
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                               <button
                                 onClick={() => handleCreateMatch(lostItem.id)}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                className="px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-2 w-full sm:w-auto"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -732,7 +732,7 @@ export default function AdminFoundItemsPage() {
                                     handleDeclineMatch(lostItem.id);
                                   }
                                 }}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-2 w-full sm:w-auto"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -741,7 +741,7 @@ export default function AdminFoundItemsPage() {
                               </button>
                               <Link
                                 href={`/admin/items?highlight=${lostItem.id}`}
-                                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                                className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs sm:text-sm font-medium text-center w-full sm:w-auto"
                               >
                                 View Details
                               </Link>
