@@ -89,6 +89,26 @@ export async function POST(req: Request) {
           itemType: 'LOST',
         },
       });
+
+      // Notify all admins about the new lost item report
+      const admins = await tx.user.findMany({
+        where: { role: 'ADMIN' },
+        select: { id: true },
+      });
+
+      // Create notifications for all admins
+      if (admins.length > 0) {
+        await tx.notification.createMany({
+          data: admins.map(admin => ({
+            userId: admin.id,
+            type: 'ITEM_REPORTED' as const,
+            title: 'New Lost Item Reported',
+            message: `A student has reported a lost item: "${validatedItem.title}" (${validatedItem.category}). Check the admin panel to review and find potential matches.`,
+            itemId: createdItem.id,
+            itemType: 'LOST',
+          })),
+        });
+      }
       
       return createdItem;
     });

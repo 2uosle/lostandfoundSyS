@@ -60,6 +60,7 @@ export async function GET(req: Request) {
           status: true,
           imageUrl: true,
           contactInfo: true,
+          mobileNumber: true,
           createdAt: true,
           reportedBy: {
             select: {

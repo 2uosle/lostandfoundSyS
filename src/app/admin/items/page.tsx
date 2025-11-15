@@ -18,6 +18,7 @@ type Item = {
   status: string;
   imageUrl: string | null;
   contactInfo: string;
+  mobileNumber?: string | null;
   createdAt: Date;
   reportedBy?: {
     name: string | null;
@@ -617,9 +618,15 @@ export default function AdminItemsPage() {
                               <span className="text-gray-900 dark:text-gray-100">{item.reportedBy.email}</span>
                             </div>
                           )}
+                          {item.mobileNumber && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Mobile:</span>
+                              <span className="text-gray-900 dark:text-gray-100">{item.mobileNumber}</span>
+                            </div>
+                          )}
                           {item.contactInfo && (
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-700 dark:text-gray-300">Phone:</span>
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Contact:</span>
                               <span className="text-gray-900 dark:text-gray-100">{item.contactInfo}</span>
                             </div>
                           )}
@@ -1220,6 +1227,9 @@ export default function AdminItemsPage() {
                               <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">Reported By</p>
                               <p className="text-base text-red-900 dark:text-red-100">{selectedLostItem.reportedBy?.name || 'N/A'}</p>
                               <p className="text-sm text-red-800 dark:text-red-200">{selectedLostItem.reportedBy?.email || ''}</p>
+                              {selectedLostItem.mobileNumber && (
+                                <p className="text-sm text-red-800 dark:text-red-200">{selectedLostItem.mobileNumber}</p>
+                              )}
                             </div>
                           </div>
                         )}
