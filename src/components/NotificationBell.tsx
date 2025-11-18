@@ -245,8 +245,11 @@ export default function NotificationBell() {
           return (
             <>
               <div className="fixed inset-0 z-[9998]" onClick={() => setShowDropdown(false)} />
-              <div className="fixed z-[9999] right-2 left-2 top-14 sm:right-0 sm:left-auto sm:top-12 w-auto sm:w-96 
-                              max-h-[70vh] sm:max-h-[32rem] 
+              <div className="fixed z-[9999] 
+                              left-4 right-4 top-16 
+                              md:left-auto md:right-20 md:top-14
+                              w-auto md:w-96 
+                              max-h-[70vh] md:max-h-[32rem] 
                               bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl flex flex-col overflow-hidden">
                 {/* Header */}
                 <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
