@@ -46,11 +46,20 @@ export async function POST(req: Request) {
       userId: session.user.id,
     });
 
-    // Extract student turnin information (optional)
-    const turnedInByName = body.turnedInByName?.trim() || null;
-    const turnedInByStudentNumber = body.turnedInByStudentNumber?.trim() || null;
-    const turnedInByContact = body.turnedInByContact?.trim() || null;
-    const turnedInByDepartment = body.turnedInByDepartment?.trim() || null;
+    // Extract student turn-in information (now REQUIRED for found items)
+    const turnedInByName = body.turnedInByName?.trim();
+    const turnedInByStudentNumber = body.turnedInByStudentNumber?.trim();
+    const turnedInByContact = body.turnedInByContact?.trim();
+    const turnedInByDepartment = body.turnedInByDepartment?.trim();
+
+    const missing: string[] = [];
+    if (!turnedInByName) missing.push('Student Name is required');
+    if (!turnedInByStudentNumber) missing.push('Student Number is required');
+    if (!turnedInByContact) missing.push('Contact Info is required');
+    if (!turnedInByDepartment) missing.push('Department / Course is required');
+    if (missing.length) {
+      return errorResponse(missing.join(', '), 400);
+    }
 
     // Validate image
     imageUploadSchema.parse({ image: body.image });

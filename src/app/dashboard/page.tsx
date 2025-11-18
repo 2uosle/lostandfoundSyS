@@ -31,7 +31,6 @@ type HandoffSession = {
   id: string;
   role: 'OWNER' | 'FINDER';
   ownerCode?: string;
-  ownerVerifiedAdmin: boolean;
   adminVerifiedOwner: boolean;
   expiresAt: string;
   status: string;
@@ -49,8 +48,7 @@ function DashboardContent() {
   const loadedOnceRef = useRef(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [handoffSessions, setHandoffSessions] = useState<Record<string, HandoffSession>>({});
-  const [verifyingHandoff, setVerifyingHandoff] = useState<string | null>(null);
-  const [handoffInput, setHandoffInput] = useState<Record<string, string>>({});
+
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
 
   useEffect(() => {
@@ -168,29 +166,7 @@ function DashboardContent() {
     };
   }, [loadHandoffSession]);
 
-  const handleVerifyHandoff = async (sessionId: string, code: string) => {
-    if (!code || code.length !== 6) return;
-    setVerifyingHandoff(sessionId);
-    try {
-      const res = await fetch(`/api/handoff/${sessionId}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        // Play completion sound for successful handoff verification
-        playCompleteSound();
-        showToast(data.data.message, 'success');
-        // Reload items and handoff session
-        await loadItems();
-      } else {
-        showToast(data.error || 'Incorrect code', 'error');
-      }
-    } finally {
-      setVerifyingHandoff(null);
-    }
-  };
+
 
   const handleResolve = async (itemId: string) => {
     // Only allow resolve when item is MATCHED or CLAIMED
@@ -395,48 +371,16 @@ function DashboardContent() {
                           <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-3">Show this code to the admin during handoff.</p>
                       
                       <div className="text-xs mb-3">
-                        <div className={`p-2 rounded ${handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
-                          Verification: {handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner ? 'Complete ✓' : 'Pending'}
-                          {handoffSessions[item.id].ownerVerifiedAdmin && !handoffSessions[item.id].adminVerifiedOwner && (
-                            <span className="block text-[10px] text-blue-600 dark:text-blue-300">✓ You verified admin's code</span>
+                        <div className={`p-2 rounded ${handoffSessions[item.id].adminVerifiedOwner ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
+                          Verification: {handoffSessions[item.id].adminVerifiedOwner ? 'Complete ✓' : 'Pending'}
+                          {!handoffSessions[item.id].adminVerifiedOwner && (
+                            <span className="block text-[10px] text-blue-600 dark:text-blue-300">Ask the admin to verify your code</span>
                           )}
-                          {!handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner && (
+                          {handoffSessions[item.id].adminVerifiedOwner && (
                             <span className="block text-[10px] text-blue-600 dark:text-blue-300">✓ Admin verified your code</span>
                           )}
                         </div>
                       </div>
-
-                      {!(handoffSessions[item.id].ownerVerifiedAdmin && handoffSessions[item.id].adminVerifiedOwner) ? (
-                        <>
-                          <label className="block text-sm font-medium text-indigo-900 dark:text-indigo-200 mb-2">
-                            Enter the admin's code to verify
-                          </label>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={handoffInput[item.id] || ''}
-                            onChange={(e) => setHandoffInput({ ...handoffInput, [item.id]: e.target.value.replace(/\D/g, '').slice(0,6) })}
-                            className="w-full px-4 py-2 border border-indigo-300 dark:border-indigo-800 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest mb-2"
-                            placeholder="6-digit code"
-                          />
-                          <button
-                            onClick={() => handleVerifyHandoff(handoffSessions[item.id].id, handoffInput[item.id] || '')}
-                            disabled={verifyingHandoff !== null || (handoffInput[item.id] || '').length !== 6}
-                            className={`w-full px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                              verifyingHandoff || (handoffInput[item.id] || '').length !== 6
-                                ? 'bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed'
-                                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                            }`}
-                          >
-                            {verifyingHandoff === handoffSessions[item.id].id ? 'Verifying...' : 'Verify Code'}
-                          </button>
-                        </>
-                      ) : (
-                        <div className="text-center text-green-700 dark:text-green-300 font-medium">
-                          ✓ Both parties verified!
-                        </div>
-                      )}
                         </>
                       )}
                     </div>
@@ -625,49 +569,17 @@ function DashboardContent() {
                         <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-4">Show this code to the admin during handoff.</p>
                     
                     <div className="mb-4">
-                      <div className={`p-3 rounded-lg text-center ${handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
+                      <div className={`p-3 rounded-lg text-center ${handoffSessions[selectedItem.id].adminVerifiedOwner ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
                         <div className="font-semibold">Verification Status</div>
-                        <div className="text-sm">{handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner ? '✓ Complete' : 'Pending'}</div>
-                        {handoffSessions[selectedItem.id].ownerVerifiedAdmin && !handoffSessions[selectedItem.id].adminVerifiedOwner && (
-                          <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">✓ You verified admin's code</div>
+                        <div className="text-sm">{handoffSessions[selectedItem.id].adminVerifiedOwner ? '✓ Complete' : 'Pending'}</div>
+                        {!handoffSessions[selectedItem.id].adminVerifiedOwner && (
+                          <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">Ask the admin to verify your code</div>
                         )}
-                        {!handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner && (
+                        {handoffSessions[selectedItem.id].adminVerifiedOwner && (
                           <div className="text-xs text-blue-600 dark:text-blue-300 mt-1">✓ Admin verified your code</div>
                         )}
                       </div>
                     </div>
-
-                    {!(handoffSessions[selectedItem.id].ownerVerifiedAdmin && handoffSessions[selectedItem.id].adminVerifiedOwner) ? (
-                      <>
-                        <label className="block text-sm font-medium text-indigo-900 dark:text-indigo-200 mb-2">
-                          Enter the admin's code to verify
-                        </label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={handoffInput[selectedItem.id] || ''}
-                          onChange={(e) => setHandoffInput({ ...handoffInput, [selectedItem.id]: e.target.value.replace(/\D/g, '').slice(0,6) })}
-                          className="w-full px-4 py-3 border border-indigo-300 dark:border-indigo-800 rounded-lg bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest text-lg mb-3"
-                          placeholder="6-digit code"
-                        />
-                        <button
-                          onClick={() => handleVerifyHandoff(handoffSessions[selectedItem.id].id, handoffInput[selectedItem.id] || '')}
-                          disabled={verifyingHandoff !== null || (handoffInput[selectedItem.id] || '').length !== 6}
-                          className={`w-full px-4 py-3 rounded-lg font-medium transition-all ${
-                            verifyingHandoff || (handoffInput[selectedItem.id] || '').length !== 6
-                              ? 'bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed'
-                              : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'
-                          }`}
-                        >
-                          {verifyingHandoff === handoffSessions[selectedItem.id].id ? 'Verifying...' : 'Verify Code'}
-                        </button>
-                      </>
-                    ) : (
-                      <div className="text-center py-4 text-green-700 dark:text-green-300 font-semibold text-lg">
-                        ✓ Verification complete!
-                      </div>
-                    )}
                       </>
                     )}
                   </div>

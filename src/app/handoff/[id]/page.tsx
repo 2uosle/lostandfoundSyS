@@ -12,9 +12,7 @@ export default function HandoffPage() {
   const params = useParams();
   const handoffId = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [sessionData, setSessionData] = useState<any | null>(null);
-  const [otherCode, setOtherCode] = useState('');
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
@@ -64,27 +62,7 @@ export default function HandoffPage() {
     return () => { try { es?.close(); } catch {} };
   }, [handoffId]);
 
-  async function submitCode() {
-    if (otherCode.trim().length === 0) return;
-    setSubmitting(true);
-    try {
-      const res = await fetch(`/api/handoff/${handoffId}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: otherCode.trim() }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showToast(data.data.message, 'success');
-        await load();
-      } else {
-        showToast(data.error || 'Incorrect code', 'error');
-        await load();
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  // Single-code flow: Owner no longer submits any code.
 
   // Auto-close countdown when handoff is complete
   useEffect(() => {
@@ -123,7 +101,7 @@ export default function HandoffPage() {
     );
   }
 
-  const { role, myCode, status: hsStatus, locked, expiresAt, ownerVerifiedAdmin, adminVerifiedOwner, message } = sessionData;
+  const { role, myCode, status: hsStatus, locked, expiresAt, adminVerifiedOwner, message } = sessionData;
   const expiresLabel = expiresAt ? formatDistanceToNowStrict(new Date(expiresAt), { addSuffix: true }) : '';
 
   const isDone = hsStatus === 'COMPLETED';
@@ -150,40 +128,14 @@ export default function HandoffPage() {
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-800 dark:text-blue-200 text-sm text-center">{message}</div>
         ) : (
           <div className="mb-6">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Show this code to the admin</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Show this code to the admin for verification</div>
             <div className="text-3xl font-mono tracking-widest bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg p-4 text-center select-all">
               {myCode}
             </div>
           </div>
         )}
 
-        {!message && !isDone && !isExpired && !locked && (
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Enter the admin's code
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={otherCode}
-              onChange={(e) => setOtherCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono tracking-widest"
-              placeholder="6-digit code"
-            />
-            <button
-              onClick={submitCode}
-              disabled={submitting || otherCode.length !== 6}
-              className={`mt-3 w-full px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                submitting || otherCode.length !== 6
-                  ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-sm hover:shadow-md'
-              }`}
-            >
-              {submitting ? 'Submitting...' : 'Verify Code'}
-            </button>
-          </div>
-        )}
+        {/* No input in single-code flow */}
 
         {locked && (
           <div className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-center mb-3">
@@ -211,15 +163,9 @@ export default function HandoffPage() {
         )}
 
         {!message && (
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className={`p-3 rounded-lg border ${ownerVerifiedAdmin ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-              <div className="font-medium text-gray-700 dark:text-gray-300">You Entered Admin Code</div>
-              <div className={`${ownerVerifiedAdmin ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-gray-400'}`}>
-                {ownerVerifiedAdmin ? '✓ Verified' : 'Pending'}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-3 text-sm">
             <div className={`p-3 rounded-lg border ${adminVerifiedOwner ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-              <div className="font-medium text-gray-700 dark:text-gray-300">Admin Entered Your Code</div>
+              <div className="font-medium text-gray-700 dark:text-gray-300">Admin Verified Your Code</div>
               <div className={`${adminVerifiedOwner ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-gray-400'}`}>
                 {adminVerifiedOwner ? '✓ Verified' : 'Pending'}
               </div>

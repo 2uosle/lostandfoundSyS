@@ -146,22 +146,15 @@ export default function AdminHandoffConsole() {
 
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm p-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Admin Handoff Console</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Exchange codes with the owner to complete verification.</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Verify the owner's code to complete the handoff.</p>
 
-          {/* Admin's Code Display */}
-          <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-lg">
-            <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200 mb-2">🔐 Your Admin Code</h3>
-            <div className="text-3xl font-mono tracking-widest bg-white dark:bg-gray-800 rounded-lg p-4 text-center select-all border-2 border-purple-300 dark:border-purple-700 text-gray-900 dark:text-gray-100">
-              {info.adminCode}
-            </div>
-            <p className="text-xs text-purple-700 dark:text-purple-300 mt-2">Share this code with the owner to verify their identity.</p>
-          </div>
+          {/* Single-code flow: no need to show Admin's code */}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className={`p-4 rounded-lg border ${info.ownerVerifiedAdmin && info.adminVerifiedOwner ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+            <div className={`p-4 rounded-lg border ${info.adminVerifiedOwner ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
               <div className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">Status</div>
               <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {info.ownerVerifiedAdmin && info.adminVerifiedOwner ? '✓ Both Verified' : 'In Progress'}
+                {info.adminVerifiedOwner ? '✓ Verified' : 'In Progress'}
               </div>
             </div>
             <div className="p-4 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
@@ -199,7 +192,7 @@ export default function AdminHandoffConsole() {
             <div className="mb-6">
               <div className="w-full px-4 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
                 <div className="text-green-800 dark:text-green-200 font-semibold mb-2">✓ Handoff Complete!</div>
-                <div className="text-green-700 dark:text-green-300 text-sm">Both parties verified. Redirecting in {countdown}s...</div>
+                <div className="text-green-700 dark:text-green-300 text-sm">Owner code verified. Redirecting in {countdown}s...</div>
               </div>
               <button
                 onClick={() => router.push('/admin/dashboard')}
@@ -210,16 +203,10 @@ export default function AdminHandoffConsole() {
             </div>
           )}
 
-          {/* Verification Status Grid */}
-          <div className="grid grid-cols-2 gap-3 text-sm mb-6">
-            <div className={`p-3 rounded-lg border ${info.ownerVerifiedAdmin ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-              <div className="font-medium text-gray-700 dark:text-gray-300">Owner Entered Your Code</div>
-              <div className={`${info.ownerVerifiedAdmin ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-gray-400'}`}>
-                {info.ownerVerifiedAdmin ? '✓ Verified' : 'Pending'}
-              </div>
-            </div>
+          {/* Verification Status */}
+          <div className="grid grid-cols-1 gap-3 text-sm mb-6">
             <div className={`p-3 rounded-lg border ${info.adminVerifiedOwner ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-              <div className="font-medium text-gray-700 dark:text-gray-300">You Entered Owner Code</div>
+              <div className="font-medium text-gray-700 dark:text-gray-300">You Verified Owner Code</div>
               <div className={`${info.adminVerifiedOwner ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-gray-400'}`}>
                 {info.adminVerifiedOwner ? '✓ Verified' : 'Pending'}
               </div>

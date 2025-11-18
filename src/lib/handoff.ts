@@ -21,18 +21,12 @@ export function inferRole(session: { ownerUserId: string; finderUserId: string }
   return null;
 }
 
-// Check if owner has been fully verified (mutual verification complete)
-export function isOwnerFullyVerified(session: {
-  ownerVerifiedAdmin: boolean;
-  adminVerifiedOwner: boolean;
-}): boolean {
-  return session.ownerVerifiedAdmin && session.adminVerifiedOwner;
+// Check if owner has been verified by admin (single-code flow)
+export function isOwnerFullyVerified(session: { adminVerifiedOwner: boolean }): boolean {
+  return !!session.adminVerifiedOwner;
 }
 
-// Check if handoff is complete (only owner needs to be verified)
-export function isHandoffComplete(session: {
-  ownerVerifiedAdmin: boolean;
-  adminVerifiedOwner: boolean;
-}): boolean {
-  return session.ownerVerifiedAdmin && session.adminVerifiedOwner;
+// Check if handoff is complete (single verification by admin)
+export function isHandoffComplete(session: { adminVerifiedOwner: boolean }): boolean {
+  return !!session.adminVerifiedOwner;
 }

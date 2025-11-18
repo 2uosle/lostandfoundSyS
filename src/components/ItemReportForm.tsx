@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -40,6 +40,10 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
   const [formData, setFormData] = useState<FormData | null>(null);
   const [userEmail, setUserEmail] = useState('');
   const [mobileNumber, setMobileNumber] = useState('+63 ');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const firstErrorRef = useRef<string | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [confirmAck, setConfirmAck] = useState(false);
 
   // Automatically populate user's email from session
   useEffect(() => {
@@ -82,19 +86,69 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
+    firstErrorRef.current = null;
 
     const formElement = e.currentTarget;
     const formDataObj = new FormData(formElement);
+    formRef.current = formElement;
     
-    // Handle file input
+    // Lightweight client-side required validation with scroll-to-first-error
+    // Required for both flows
+    const localErrors: Record<string, string> = {};
+    const requiredCommon = [
+      { name: 'title', label: 'Item Name' },
+      { name: 'category', label: 'Category' },
+      { name: 'description', label: 'Description' },
+      { name: 'date', label: isLost ? 'Date Lost' : 'Date Found' },
+    ];
+    requiredCommon.forEach((f) => {
+      const v = (formDataObj.get(f.name) as string)?.trim();
+      if (!v) {
+        localErrors[f.name] = `${f.label} is required`;
+      }
+    });
+    // Location is always required
+    const locationVal = (formDataObj.get('location') as string)?.trim();
+    if (!locationVal) {
+      localErrors['location'] = isLost ? 'Last seen location is required' : 'Found location is required';
+    }
+    // Photo required for found items
     const file = formDataObj.get('image') as File | null;
-    let imageBase64: string | null = null;
-    
-    // For found items, image is required
     if (!isLost && (!file || file.size === 0)) {
-      setError('Photo is required for found items');
+      localErrors['image'] = 'Photo is required for found items';
+    }
+    // Student turn-in info required for found items
+    if (!isLost) {
+      const reqFound = [
+        { name: 'turnedInByName', label: 'Student Name' },
+        { name: 'turnedInByStudentNumber', label: 'Student Number' },
+        { name: 'turnedInByContact', label: 'Contact Info' },
+        { name: 'turnedInByDepartment', label: 'Department / Course' },
+      ];
+      reqFound.forEach((f) => {
+        const v = (formDataObj.get(f.name) as string)?.trim();
+        if (!v) localErrors[f.name] = `${f.label} is required`;
+      });
+    }
+    // If we have errors, set and scroll to first
+    if (Object.keys(localErrors).length > 0) {
+      setFieldErrors(localErrors);
+      const firstKey = Object.keys(localErrors)[0];
+      firstErrorRef.current = firstKey;
+      // Scroll after paint
+      requestAnimationFrame(() => {
+        const el = formRef.current?.querySelector(`#${CSS.escape(firstKey)}`) as HTMLElement | null;
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          try { (el as HTMLInputElement).focus?.(); } catch {}
+        }
+      });
       return;
     }
+    
+    // Handle file input (already retrieved above for validation)
+    let imageBase64: string | null = null;
     
     if (file && file.size > 0) {
       if (!['image/jpeg', 'image/png'].includes(file.type)) {
@@ -140,6 +194,12 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
 
   const handleConfirm = async () => {
     if (!formData) return;
+
+    if (!confirmAck) {
+      // Should not happen if button is disabled, but guard anyway
+      setError('Please confirm the information is accurate before submitting.');
+      return;
+    }
 
     setSubmitting(true);
     setError('');
@@ -258,18 +318,21 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 id="image"
                 accept="image/png,image/jpeg"
                 required={!isLost}
-                className="block w-full text-sm text-gray-700 dark:text-gray-300 
+                className={`block w-full text-sm text-gray-700 dark:text-gray-300 
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-full file:border-0 file:text-sm file:font-semibold
                   file:bg-gray-100 dark:file:bg-gray-800 
                   file:text-gray-700 dark:file:text-gray-200
                   hover:file:bg-gray-200 dark:hover:file:bg-gray-700 
-                  transition-all duration-200"
+                  transition-all duration-200 ${fieldErrors.image ? 'border border-red-500 rounded-lg' : ''}`}
               />
               {!isLost && (
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   A clear photo helps verify the item and return it to the rightful owner.
                 </p>
+              )}
+              {fieldErrors.image && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.image}</p>
               )}
             </div>
 
@@ -285,16 +348,19 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 required
                 minLength={3}
                 maxLength={100}
-                className="w-full px-4 py-3.5 bg-white dark:bg-gray-950 
+                className={`w-full px-4 py-3.5 bg-white dark:bg-gray-950 
                           border border-gray-300 dark:border-gray-700 rounded-xl
                           text-gray-900 dark:text-gray-100
                           placeholder:text-gray-500 dark:placeholder:text-gray-400
                           focus:ring-2 focus:ring-blue-500/50 
                           focus:border-blue-500
                           hover:border-gray-400 dark:hover:border-gray-600
-                          transition-all duration-200"
+                          transition-all duration-200 ${fieldErrors.title ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
                 placeholder={isLost ? "e.g., Blue Nike Backpack" : "e.g., Black Wallet"}
               />
+              {fieldErrors.title && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.title}</p>
+              )}
             </div>
 
             <div className="group">
@@ -305,7 +371,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 name="category"
                 id="category"
                 required
-                className="w-full px-4 py-3.5 bg-white dark:bg-gray-950 
+                className={`w-full px-4 py-3.5 bg-white dark:bg-gray-950 
                           border border-gray-300 dark:border-gray-700 rounded-xl
                           text-gray-900 dark:text-gray-100
                           focus:ring-2 focus:ring-blue-500/50 
@@ -313,7 +379,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                           hover:border-gray-400 dark:hover:border-gray-600
                           transition-all duration-200 appearance-none cursor-pointer
                           bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTUgNy41TDEwIDEyLjVMMTUgNy41IiBzdHJva2U9IiM2QjcyODAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=')] 
-                          bg-no-repeat bg-[center_right_1rem]"
+                          bg-no-repeat bg-[center_right_1rem] ${fieldErrors.category ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
               >
                 <option value="">Select a category</option>
                 <option value="electronics">Electronics</option>
@@ -322,6 +388,9 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 <option value="documents">Documents</option>
                 <option value="other">Other</option>
               </select>
+              {fieldErrors.category && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.category}</p>
+              )}
             </div>
 
             <div className="group">
@@ -335,40 +404,46 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 minLength={5}
                 maxLength={1000}
                 rows={4}
-                className="w-full px-4 py-3.5 bg-white dark:bg-gray-950 
+                className={`w-full px-4 py-3.5 bg-white dark:bg-gray-950 
                           border border-gray-300 dark:border-gray-700 rounded-xl
                           text-gray-900 dark:text-gray-100
                           placeholder:text-gray-500 dark:placeholder:text-gray-400
                           focus:ring-2 focus:ring-blue-500/50 
                           focus:border-blue-500
                           hover:border-gray-400 dark:hover:border-gray-600
-                          transition-all duration-200 resize-none min-h-[120px]"
+                          transition-all duration-200 resize-none min-h-[120px] ${fieldErrors.description ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
                 placeholder="Please provide color, size, distinctive features, etc."
               />
+              {fieldErrors.description && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.description}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="group">
                 <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {locationLabel} {!isLost && '*'}
+                  {locationLabel} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="location"
                   id="location"
-                  required={!isLost}
+                  required
                   minLength={3}
                   maxLength={200}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                  className={`w-full px-4 py-3 bg-white dark:bg-gray-950 
                             border border-gray-300 dark:border-gray-700 rounded-xl
                             text-gray-900 dark:text-gray-100
                             placeholder:text-gray-500 dark:placeholder:text-gray-400
                             focus:ring-2 focus:ring-blue-500/50 
                             focus:border-blue-500
                             hover:border-gray-400 dark:hover:border-gray-600
-                            transition-all duration-200"
+                            transition-all duration-200 ${fieldErrors.location ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
                   placeholder={isLost ? "e.g., Library, 2nd floor" : "e.g., Cafeteria"}
                 />
+                {fieldErrors.location && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.location}</p>
+                )}
               </div>
 
               <div className="group">
@@ -381,14 +456,17 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                   id="date"
                   required
                   max={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                  className={`w-full px-4 py-3 bg-white dark:bg-gray-950 
                             border border-gray-300 dark:border-gray-700 rounded-xl
                             text-gray-900 dark:text-gray-100
                             focus:ring-2 focus:ring-blue-500/50 
                             focus:border-blue-500
                             hover:border-gray-400 dark:hover:border-gray-600
-                            transition-all duration-200"
+                            transition-all duration-200 ${fieldErrors.date ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
                 />
+                {fieldErrors.date && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.date}</p>
+                )}
               </div>
             </div>
             
@@ -410,90 +488,106 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="group">
                     <label htmlFor="turnedInByName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Student Name
+                      Student Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="turnedInByName"
                       id="turnedInByName"
-                      minLength={5}
+                      required
+                      minLength={2}
                       maxLength={100}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                      className={`w-full px-4 py-3 bg-white dark:bg-gray-950 
                                 border border-gray-300 dark:border-gray-700 rounded-xl
                                 text-gray-900 dark:text-gray-100
                                 placeholder:text-gray-500 dark:placeholder:text-gray-400
                                 focus:ring-2 focus:ring-purple-500/50 
                                 focus:border-purple-500
                                 hover:border-gray-400 dark:hover:border-gray-600
-                                transition-all duration-200"
+                                transition-all duration-200 ${fieldErrors.turnedInByName ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
                       placeholder="e.g., Juan Dela Cruz"
                     />
+                    {fieldErrors.turnedInByName && (
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.turnedInByName}</p>
+                    )}
                   </div>
 
                   <div className="group">
                     <label htmlFor="turnedInByStudentNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Student Number
+                      Student Number <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="turnedInByStudentNumber"
                       id="turnedInByStudentNumber"
-                      minLength={5}
+                      required
+                      minLength={3}
                       maxLength={50}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                      className={`w-full px-4 py-3 bg-white dark:bg-gray-950 
                                 border border-gray-300 dark:border-gray-700 rounded-xl
                                 text-gray-900 dark:text-gray-100
                                 placeholder:text-gray-500 dark:placeholder:text-gray-400
                                 focus:ring-2 focus:ring-purple-500/50 
                                 focus:border-purple-500
                                 hover:border-gray-400 dark:hover:border-gray-600
-                                transition-all duration-200"
+                                transition-all duration-200 ${fieldErrors.turnedInByStudentNumber ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
                       placeholder="e.g., 2021-12345"
                     />
+                    {fieldErrors.turnedInByStudentNumber && (
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.turnedInByStudentNumber}</p>
+                    )}
                   </div>
 
                   <div className="group">
                     <label htmlFor="turnedInByContact" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Contact Info
+                      Contact Info <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="turnedInByContact"
                       id="turnedInByContact"
+                      required
                       minLength={5}
                       maxLength={100}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                      className={`w-full px-4 py-3 bg-white dark:bg-gray-950 
                                 border border-gray-300 dark:border-gray-700 rounded-xl
                                 text-gray-900 dark:text-gray-100
                                 placeholder:text-gray-500 dark:placeholder:text-gray-400
                                 focus:ring-2 focus:ring-purple-500/50 
                                 focus:border-purple-500
                                 hover:border-gray-400 dark:hover:border-gray-600
-                                transition-all duration-200"
+                                transition-all duration-200 ${fieldErrors.turnedInByContact ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
                       placeholder="Email or phone number"
                     />
+                    {fieldErrors.turnedInByContact && (
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.turnedInByContact}</p>
+                    )}
                   </div>
 
                   <div className="group">
                     <label htmlFor="turnedInByDepartment" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Department / Course
+                      Department / Course <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="turnedInByDepartment"
                       id="turnedInByDepartment"
+                      required
                       minLength={2}
                       maxLength={100}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-950 
+                      className={`w-full px-4 py-3 bg-white dark:bg-gray-950 
                                 border border-gray-300 dark:border-gray-700 rounded-xl
                                 text-gray-900 dark:text-gray-100
                                 placeholder:text-gray-500 dark:placeholder:text-gray-400
                                 focus:ring-2 focus:ring-purple-500/50 
                                 focus:border-purple-500
                                 hover:border-gray-400 dark:hover:border-gray-600
-                                transition-all duration-200"
+                                transition-all duration-200 ${fieldErrors.turnedInByDepartment ? '!border-red-500 focus:!border-red-500 focus:!ring-red-400/50' : ''}`}
                       placeholder="e.g., BS Computer Science"
                     />
+                    {fieldErrors.turnedInByDepartment && (
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.turnedInByDepartment}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -783,6 +877,18 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
               {/* Footer Actions */}
               <div className="px-8 py-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800 
                             flex gap-3 animate-in slide-in-from-bottom duration-500 delay-400">
+                <div className="flex-1 flex items-center gap-2">
+                  <input
+                    id="confirmAck"
+                    type="checkbox"
+                    checked={confirmAck}
+                    onChange={(e) => setConfirmAck(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="confirmAck" className="text-sm text-gray-700 dark:text-gray-300">
+                    I confirm the details above are accurate.
+                  </label>
+                </div>
                 <button
                   onClick={handleEditForm}
                   disabled={submitting}
@@ -800,7 +906,7 @@ export default function ItemReportForm({ type, onSuccess }: ItemReportFormProps)
                 </button>
                 <button
                   onClick={handleConfirm}
-                  disabled={submitting}
+                  disabled={submitting || !confirmAck}
                   className={`flex-1 px-6 py-3.5 text-white rounded-xl
                             ${isLost 
                               ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800' 

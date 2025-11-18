@@ -1,31 +1,6 @@
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse, handleApiError } from '@/lib/api-utils';
-import { HANDOFF_MAX_ATTEMPTS, inferRole, isExpired, isHandoffComplete } from '@/lib/handoff';
-import { $Enums } from '@prisma/client';
-import { emitHandoffUpdate } from '@/lib/handoff-events';
-
-// Helper activity log
-async function logActivity(
-  action: $Enums.AdminAction | any,
-  itemType: 'LOST' | 'FOUND',
-  itemId: string,
-  itemTitle: string,
-  userId: string,
-  details?: any
-) {
-  await prisma.activityLog.create({
-    data: {
-      action,
-      itemType,
-      itemId,
-      itemTitle,
-      userId,
-      details: details ? JSON.stringify(details) : null,
-    },
-  });
-}
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -35,101 +10,10 @@ export async function POST(req: Request, context: RouteContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user) return errorResponse('Unauthorized', 401);
 
-    const { code } = await req.json();
-    if (!code || typeof code !== 'string') return errorResponse('Code is required', 400);
+    // Single-code flow deprecates owner submitting admin code. Provide gentle guidance.
+    return successResponse({ message: 'No action required. Show your code to the admin — they will verify it.' });
 
-    const anyPrisma: any = prisma;
-    const { id } = await context.params;
-    const hs = await anyPrisma.handoffSession.findUnique({ where: { id } });
-    if (!hs) return errorResponse('Session not found', 404);
-
-    const role = inferRole(hs, session.user.id);
-    if (role !== 'OWNER') return errorResponse('Only the owner can verify in this handoff', 403);
-
-  if (hs.locked) return errorResponse('Session is locked', 423);
-  if (isExpired(hs.expiresAt) || hs.status !== 'ACTIVE') return errorResponse('Session expired', 410);
-
-    // Owner verifies admin's code
-    const attemptsField = 'ownerAttempts';
-    const expectedCode = hs.adminCode;
-
-    if (hs[attemptsField] >= HANDOFF_MAX_ATTEMPTS) {
-      await anyPrisma.handoffSession.update({
-        where: { id: hs.id },
-        data: { locked: true, status: 'LOCKED' as any },
-      });
-      emitHandoffUpdate(hs.id);
-      return errorResponse('Attempt limit exceeded; session locked', 423);
-    }
-
-    const correct = code === expectedCode;
-
-    // Update attempts and verification
-    const updateData: any = { [attemptsField]: hs[attemptsField] + 1 };
-    if (correct) updateData.ownerVerifiedAdmin = true;
-
-    const updated = await anyPrisma.handoffSession.update({
-      where: { id: hs.id },
-      data: updateData,
-    });
-    emitHandoffUpdate(hs.id);
-
-    if (!correct) {
-      return errorResponse('Incorrect code', 400);
-    }
-
-    // Check if handoff is complete (both owner and admin must verify each other)
-    if (isHandoffComplete(updated)) {
-      // Update both lost and found items to CLAIMED
-      const lost = await prisma.lostItem.findUnique({ 
-        where: { id: hs.lostItemId }, 
-        select: { id: true, title: true } 
-      });
-      
-      const found = await prisma.foundItem.findUnique({ 
-        where: { id: hs.foundItemId }, 
-        select: { id: true, title: true } 
-      });
-      
-      if (lost) {
-        await prisma.lostItem.update({ 
-          where: { id: lost.id }, 
-          data: { status: 'CLAIMED' as any } 
-        });
-        await logActivity(
-          $Enums.AdminAction.CLAIM, 
-          'LOST', 
-          lost.id, 
-          lost.title, 
-          session.user.id, 
-          { handoffSessionId: hs.id, handoff: 'COMPLETE' }
-        );
-      }
-      
-      if (found) {
-        await prisma.foundItem.update({ 
-          where: { id: found.id }, 
-          data: { status: 'CLAIMED' as any } 
-        });
-        await logActivity(
-          $Enums.AdminAction.CLAIM, 
-          'FOUND', 
-          found.id, 
-          found.title, 
-          session.user.id, 
-          { handoffSessionId: hs.id, handoff: 'COMPLETE' }
-        );
-      }
-      
-      await anyPrisma.handoffSession.update({ 
-        where: { id: hs.id }, 
-        data: { status: 'COMPLETED' as any } 
-      });
-      emitHandoffUpdate(hs.id);
-      return successResponse({ message: 'Admin code verified! Handoff complete - items marked as claimed.' });
-    }
-
-    return successResponse({ message: 'Admin code verified! Waiting for admin to verify your code.' });
+    // Old logic removed (single-code flow)
   } catch (error) {
     return handleApiError(error);
   }

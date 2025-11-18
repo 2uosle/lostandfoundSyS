@@ -410,9 +410,7 @@ export default function AdminItemsPage() {
                       {handoff.lostItem?.title} ↔ {handoff.foundItem?.title}
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      {handoff.ownerVerifiedAdmin && !handoff.adminVerifiedOwner && '⏳ Waiting for you to verify owner code'}
-                      {!handoff.ownerVerifiedAdmin && handoff.adminVerifiedOwner && '⏳ Waiting for owner to verify your code'}
-                      {!handoff.ownerVerifiedAdmin && !handoff.adminVerifiedOwner && '⏳ Waiting for both parties'}
+                      {handoff.adminVerifiedOwner ? '✓ Owner verified by you' : '⏳ Waiting for you to verify owner code'}
                     </div>
                   </div>
                   <Link
